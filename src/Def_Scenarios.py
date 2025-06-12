@@ -10,15 +10,24 @@ def create_scenarios():
         for j in range(i, 14)  # i to 13
         if i <= j
     ]
+    '''
     demand_uniform = [
         {"Dist_Type": "UNIFORM", "min": min_val, "max": max_val}
         for min_val, max_val in demand_uniform_range
     ]
+    '''
+
+    demand_uniform = [
+        {"Dist_Type": "UNIFORM", "min": min_val, "max": min_val+1}
+        for min_val, max_val in demand_uniform_range
+    ]
+    '''
     demand_gaussian = [
         {"Dist_Type": "GAUSSIAN", "mean": mean, "std": std}
         for mean in range(9, 14)  # 9 to 13
         for std in range(1, 5)    # 1 to 4
     ]
+    '''
 
     # LEADTIME
     leadtime_uniform_range = [
@@ -27,19 +36,29 @@ def create_scenarios():
         for j in range(i, 4)  # i to 3
         if i <= j
     ]
+    '''
     leadtime_uniform = [
         {"Dist_Type": "UNIFORM", "min": min_val, "max": max_val}
         for min_val, max_val in leadtime_uniform_range
+    ]'''
+    leadtime_uniform = [
+        {"Dist_Type": "UNIFORM", "min": min_val, "max": min_val+1}
+        for min_val, max_val in leadtime_uniform_range
     ]
+    '''
     leadtime_gaussian = [
         {"Dist_Type": "GAUSSIAN", "mean": mean, "std": std}
         for mean in range(1, 4)   # 1부터 3까지
         for std in range(1, 4)    # 1부터 3까지
     ]
-
+    '''
+    '''
     # 모든 조합 생성
     scenarios = list(itertools.product(demand_uniform +
                      demand_gaussian, leadtime_uniform + leadtime_gaussian))
+    '''
+    scenarios = list(itertools.product(demand_uniform,
+                      leadtime_uniform))
     scenarios = [{"DEMAND": demand, "LEADTIME": leadtime}
                  for demand, leadtime in scenarios]
 

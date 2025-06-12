@@ -8,24 +8,23 @@ from log_SimPy import *
 from log_RL import *
 import pandas as pd
 import matplotlib.pyplot as plt
-import visualization
 from torch.utils.tensorboard import SummaryWriter
 
 
 class GymInterface(gym.Env):
-    def __init__(self, assembly_process = "AP1"):
+    def __init__(self):
         self.outer_end = False
         self.mat_count = 1
 
-        if assembly_process == "AP1":
+        if ASSEMBLY_PROCESS == "AP1":
             self.mat_count = 1
-        elif assembly_process == "AP2":
+        elif ASSEMBLY_PROCESS == "AP2":
             self.mat_count = 3
-        elif assembly_process == "AP3":
+        elif ASSEMBLY_PROCESS == "AP3":
             self.mat_count = 5
        
         
-        self.assembly_process = assembly_process
+        self.assembly_process = ASSEMBLY_PROCESS
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
         super(GymInterface, self).__init__()
 
@@ -118,10 +117,10 @@ class GymInterface(gym.Env):
         }
         # Initialize the simulation environment
         self.simpy_env, self.inventoryList, self.procurementList, self.productionList, self.sales, self.customer, self.providerList, self.daily_events = env.create_env(
-            I, P, DAILY_EVENTS)
+            I, P, DAILY_EVENTS, ASSEMBLY_PROCESS)
         env.simpy_event_processes(self.simpy_env, self.inventoryList, self.procurementList,
-                                  self.productionList, self.sales, self.customer, self.providerList, self.daily_events, I, self.scenario)
-        env.update_daily_report(self.inventoryList)
+                                  self.productionList, self.sales, self.customer, self.providerList, self.daily_events, I, self.scenario, ASSEMBLY_PROCESS)
+        env.update_daily_report(self.inventoryList, ASSEMBLY_PROCESS)
 
         state_real = self.get_current_state()
         STATE_DICT.clear()
@@ -150,7 +149,7 @@ class GymInterface(gym.Env):
         # Action append
 
         self.simpy_env.run(until=self.simpy_env.now + 24)
-        env.update_daily_report(self.inventoryList)
+        env.update_daily_report(self.inventoryList, self.assembly_process)
         # Capture the next state of the environment
         state_real = self.get_current_state()
         # Set the next state

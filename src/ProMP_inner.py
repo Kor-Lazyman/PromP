@@ -10,13 +10,14 @@ from config_SimPy import *
 
 class inner_loop:
     def __init__(self, meta_policy, env, learning_steps, alpha):
-        """Initialize inner loop for ProMP meta-learning
-        
+        """
+        Initialize inner loop for ProMP meta-learning.
+
         Args:
-            meta_policy (nn.Module): Meta-policy network (πθ)
-            env: Environment for task Ti
-            learning_steps (int): Number of learning steps
-            alpha (float): Inner loop learning rate (α)
+            meta_policy (nn.Module): Meta-policy network (πθ).
+            env: Environment instance for task Ti.
+            learning_steps (int): Number of inner adaptation steps.
+            alpha (float): Inner loop learning rate (α).
         """
         self.old_policy = meta_policy  # Meta-policy πθ
         self.env = env  # Task environment Ti
@@ -27,7 +28,7 @@ class inner_loop:
         self.ent_coef = ENT_COEF              
         self.vf_coef = VF_COEF                
         self.max_grad_norm = MAX_GRAD_NORM    
-        self.device = torch.device('cpu')
+        self.device = torch.device(DEVICE)
         self.learning_steps = learning_steps
         self.optimizer = optim.Adam(self.old_policy.parameters(), lr=alpha)  # Inner optimizer
 
@@ -36,14 +37,15 @@ class inner_loop:
         self.scheduler = LambdaLR(self.optimizer, lr_lambda=lr_lambda)
     
     def _select_action(self, state, policy):
-        """Select action using current policy
-        
+        """
+        Select action and log-probability using the given policy.
+
         Args:
-            state: Environment state
-            policy (nn.Module): Current policy network
-            
+            state: Current environment state.
+            policy (nn.Module): Policy network.
+
         Returns:
-            tuple: (actions, log_probabilities)
+            tuple: (actions (np.array), log_probabilities (Tensor))
         """
         state = torch.tensor(state, dtype=torch.float32).to(self.device)
         action_probs, _ = policy(state)
@@ -59,13 +61,14 @@ class inner_loop:
         return np.array(actions), torch.sum(torch.stack(log_probs)) 
 
     def simulation(self, policy):
-        """Sample trajectories from task Ti using given policy
-        
+        """
+        Sample a trajectory from the environment using the specified policy.
+
         Args:
-            policy (nn.Module): Policy to use for trajectory sampling
-            
+            policy (nn.Module): Policy network for trajectory sampling.
+
         Returns:
-            list: Episode transitions (state, action, reward, next_state, done, log_prob)
+            list: Episode transitions (state, action, reward, next_state, done, log_prob).
         """
         state = self.env.reset()
         done = False
@@ -83,16 +86,17 @@ class inner_loop:
         return episode_transitions
 
     def _compute_gae(self, rewards, values, gamma, lambda_):
-        """Compute Generalized Advantage Estimation (GAE)
+        """
+        Compute Generalized Advantage Estimation (GAE).
 
         Args:
-            rewards (Tensor): Rewards from trajectory
-            values (Tensor): State value estimates
-            gamma (float): Discount factor
-            lambda_ (float): GAE smoothing parameter
+            rewards (Tensor): Rewards from trajectory.
+            values (Tensor): State value estimates.
+            gamma (float): Discount factor.
+            lambda_ (float): GAE smoothing parameter.
 
         Returns:
-            Tensor: Computed advantage estimates A^π(s,a)
+            Tensor: Computed advantage estimates.
         """
         advantages = torch.zeros_like(rewards, device=self.device)
         gae = 0
@@ -103,15 +107,16 @@ class inner_loop:
         return advantages 
     
     def _first_optimization(self):
-        """Perform inner loop adaptation: θ'α,i ← θ + α ∇θ J^LR(θ)
-        
+        """
+        Perform inner loop adaptation (one-step policy update).
+
         Steps:
-        1. Sample pre-update trajectories Di = {τi} from Ti using πθ
-        2. Compute parameter updates using likelihood ratio gradient
-        3. Sample post-update trajectories D'i = {τ'i} using updated policy
-        
+            1. Sample pre-update trajectories using meta-policy.
+            2. Compute policy gradient and adapt parameters.
+            3. Sample post-update trajectories using adapted policy.
+
         Returns:
-            list: Post-update trajectory transitions
+            tuple: (adapted policy, post-update trajectory transitions)
         """
         start_time = time.time()
         
@@ -142,14 +147,13 @@ class inner_loop:
             # Compute advantages using GAE
             advantages = self._compute_gae(value_targets, values.detach().squeeze(), self.gamma, self.gae_lambda)
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)  # Normalize advantages
-            value_meta = rewards + self.gamma * next_values.view(-1).detach()
+            value_meta = value_targets + self.gamma * next_values.view(-1).detach()
 
             # Mini-batch sampling for stable updates
             batch_size = BATCH_SIZE  
             dataset_size = len(states)
             indices = np.arange(dataset_size)
             np.random.shuffle(indices)
-
             # Step 2: Parameter adaptation via gradient updates
             for i in range(0, dataset_size, batch_size):
                 # Sample mini-batch from pre-update trajectories
@@ -203,4 +207,4 @@ class inner_loop:
         # Step 3: Sample post-update trajectories D'i = {τ'i} using πθ'α,i
         new_transition = self.simulation(self.old_policy)
         
-        return new_transition
+        return self.old_policy, new_transition

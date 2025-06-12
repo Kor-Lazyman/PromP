@@ -16,6 +16,11 @@ ENT_COEF = 0.0
 VF_COEF = 0.5
 MAX_GRAD_NORM = 0.5
 N_MULTIPROCESS = 5
+META_PARAMETER_UPDATE = 100
+ALPHA = 3e-5
+BETA = 3e-5
+ETA = 0.1
+DEVICE = "cpu"
 # def Create_scenario():
 #     if DEMAND_DIST_TYPE == "UNIFORM":
 #         # Uniform distribution
