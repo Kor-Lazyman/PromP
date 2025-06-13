@@ -7,9 +7,9 @@ import time
 from torch.optim.lr_scheduler import LambdaLR
 from config_RL import *
 from config_SimPy import *
-
+from model import *
 class inner_loop:
-    def __init__(self, meta_policy, env, learning_steps, alpha):
+    def __init__(self, state_dim, action_dim, meta_policy, env, learning_steps, alpha):
         """
         Initialize inner loop for ProMP meta-learning.
 
@@ -30,12 +30,9 @@ class inner_loop:
         self.max_grad_norm = MAX_GRAD_NORM    
         self.device = torch.device(DEVICE)
         self.learning_steps = learning_steps
-        self.optimizer = optim.Adam(self.old_policy.parameters(), lr=alpha)  # Inner optimizer
-
-        # Learning rate scheduler for inner loop
-        lr_lambda = lambda step: 1 - min(step, learning_steps) / (learning_steps)
-        self.scheduler = LambdaLR(self.optimizer, lr_lambda=lr_lambda)
-    
+        self.new_policy = ActorCritic(state_dim, action_dim).to(self.device)
+        self.new_policy.load_state_dict(meta_policy.state_dict())
+        self.optimizer = optim.Adam(self.old_policy.parameters(), lr=ALPHA)  # Inner optimizer
     def _select_action(self, state, policy):
         """
         Select action and log-probability using the given policy.
@@ -83,7 +80,7 @@ class inner_loop:
             episode_reward += reward
             state = next_state
         
-        return episode_transitions
+        return episode_transitions, episode_reward
 
     def _compute_gae(self, rewards, values, gamma, lambda_):
         """
@@ -122,10 +119,10 @@ class inner_loop:
         
         for _ in range(1):  # TODO: Remove later
             # Step 1: Sample pre-update trajectories Di = {τi} from Ti using πθ
-            meta_transition = self.simulation(self.old_policy)
+            pre_update_trajectories, _ = self.simulation(self.old_policy)
 
             # Extract trajectory components
-            states, actions, rewards, next_states, dones, log_probs_meta = zip(*meta_transition)
+            states, actions, rewards, next_states, dones, log_probs_meta = zip(*pre_update_trajectories)
             
             # Convert to tensors
             states = torch.tensor(np.array(states), dtype=torch.float32, device=self.device)
@@ -196,15 +193,14 @@ class inner_loop:
                 # Gradient step: θ'α,i ← θ + α ∇θ J^LR(θ)
                 self.optimizer.zero_grad()
                 loss.backward(retain_graph=True)  
-                nn.utils.clip_grad_norm_(self.old_policy.parameters(), max_norm=0.5)
+                nn.utils.clip_grad_norm_(self.new_policy.parameters(), max_norm=0.5)
                 self.optimizer.step()
                 self.learn_time = time.time() - start_time
 
             # Update learning rate and clipping
-            self.scheduler.step()
             self.clip_epsilon = max(0.1, self.clip_epsilon * 0.995)
 
         # Step 3: Sample post-update trajectories D'i = {τ'i} using πθ'α,i
-        new_transition = self.simulation(self.old_policy)
+        post_trajectories, _ = self.simulation(self.new_policy)
         
-        return self.old_policy, new_transition
+        return self.old_policy, post_trajectories

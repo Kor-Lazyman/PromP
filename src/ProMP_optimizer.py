@@ -60,7 +60,7 @@ class OuterLoopOptimizer:
             state_dim (int): Dimension of state space.
             action_dim (list): List of action dimensions per agent/component.
         """
-        meta_policy_copy = ActorCritic(state_dim=state_dim, action_dims= action_dim)
+        meta_policy_copy = ActorCritic(state_dim=state_dim, action_dims= action_dim).to(DEVICE)
         meta_policy_copy.load_state_dict(meta_policy.state_dict())
         optimizer = optim.Adam(meta_policy_copy.parameters(), lr=self.alpha)
         # 전이 데이터 텐서 변환
@@ -124,6 +124,7 @@ class OuterLoopOptimizer:
         Returns:
             tuple: Gradient of ProMP objective.
         """
+        states, actions, rewards, next_states, dones, log_probs_inner = zip(*transitions)
         
         # ∇θJ^ProMP(θ) 계산
         gradient = torch.autograd.grad(
@@ -174,15 +175,22 @@ class OuterLoopOptimizer:
         surr1 = ratio * advantages
         surr2 = torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * advantages
         
-        # J_T^CLIP(θ') - clipped policy objective
+        # J_T^CLIP(θ') - 클리핑 정책 목적함수
         clipped_policy_loss = torch.min(surr1, surr2).mean()
 
-        # D_KL(π_θ_α, π_θ) - KL divergence penalty term
-        kl_div = torch.distributions.kl.kl_divergence(
-            Categorical(torch.stack(old_action_probs)),  # π_θ_α
-            Categorical(torch.stack(action_probs))  # π_θ
-        ).mean()
-
-        J_promp = clipped_policy_loss - 0.1 * kl_div
+        ##############################################
+        # KL 발산 계산 추가 부분 (논문 식 13 구현)
+        ##############################################
+        # 이전 정책(πθo)과 새 정책(πθ)의 확률 분포 추출
+        old_action_probs, _ = self.inner_policy(states)
+        action_probs, _ = theta_prime(states)
         
+        # 각 행동 차원별 KL 계산 후 평균
+        kl_div = torch.distributions.kl.kl_divergence(
+            Categorical(torch.stack(old_action_probs)), 
+            Categorical(torch.stack(action_probs))
+        ).mean()
+        
+        # 최종 ProMP 목적함수 (J^ProMP = J^CLIP - η*D_KL)
+        J_promp = clipped_policy_loss - 0.1 * kl_div  # η=0.1 가정
         return J_promp

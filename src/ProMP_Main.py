@@ -1,72 +1,90 @@
 from ProMP_inner import *
 from ProMP_optimizer import OuterLoopOptimizer
-import config_folders
-import config_RL
-import config_SimPy
+from config_RL import *
+from config_SimPy import *
+from config_folders import *
 from GymWrapper import *
 from Def_Scenarios import *
 from model import *
+from torch.utils.tensorboard import SummaryWriter
+from torch.profiler import profile, record_function, ProfilerActivity
+import random
 
 if __name__ == '__main__':
+    writer = SummaryWriter(log_dir=TENSORFLOW_LOGS)
     env = GymInterface()
     beta = BETA
     action_dim = [len(ACTION_SPACE) for _ in range(env.mat_count)]
     state_dim = len(env.reset())
-
     # Meta-parameters (already set up as mentioned)
-    num_iterations = 1000  # Number of outer loop iterations
-    batch_size = 16        # Number of tasks per batch
+    batch_size = 16
     convergence_threshold = 1e-4
-    
     # Initialize meta-policy parameters θ
+    # Step 3: Sample batch of tasks Ti ~ ρ(T)
+    scenarios = create_scenarios()
+    task_batch, test_batch = split_scenarios(scenarios)
     theta = ActorCritic(state_dim, action_dim)
-    
-    # Outer loop - ProMP algorithm
-    for iteration in range(num_iterations):
-        print(f"Iteration {iteration + 1}/{num_iterations}")
-        
-        # Step 3: Sample batch of tasks Ti ~ ρ(T)
-        scenarios = create_scenarios()
-        task_batch, test_batch = split_scenarios(scenarios)
+    for iteration in range(NUM_META_ITERATION):
+        start_time = time.time()
+        print(f"Iteration {iteration + 1}/{NUM_META_ITERATION}")
+
         
         # Initialize gradient accumulator for meta-update
-        
         inner_optim = []
         post_updated_trajectories = []
-        # Step 7: For all Ti ~ ρ(T)
+        sample_task_batch = random.sample(task_batch, 5)
+        sample_test_batch = random.sample(test_batch, 5)
         for n in range(META_PARAMETER_UPDATE):
             meta_gradients = []
-            for task_idx in range(1):
+            for task_idx in range(len(sample_task_batch)):
                 env.reset()
-                env.scenario = task_batch[task_idx]
+                env.scenario = sample_task_batch[task_idx]
 
                 if n == 0:
+                    #print("Check inner") # debugging
                     # Step 8: Sample pre-update trajectories using current policy πθ            
                     # Step 9: Compute adapted parameters θ'0,i using inner loop
-                    # (inner loop is already completed as mentioned)
-                    inner = inner_loop(theta, env, 1, ALPHA)
-                    
+                    inner = inner_loop(state_dim, action_dim, theta.to(DEVICE), env, 1, ALPHA)
                     # Step 10: Sample post-update trajectories using adapted policy πθ'
                     theta_old, post_updated_trajectorie = inner._first_optimization()
 
                     inner_optim.append(OuterLoopOptimizer(ALPHA, theta_old))
                     post_updated_trajectories.append(post_updated_trajectorie)
-                
-                meta_gradients.append(inner_optim[task_idx].optimizer(post_updated_trajectories[task_idx], theta, state_dim, action_dim))
-            
+                #print("Check gradient") # debugging
+                meta_gradients.append(
+                    inner_optim[task_idx].optimizer(
+                        post_updated_trajectories[task_idx], theta, state_dim, action_dim
+                    )
+                )
+                #print("Check gradient end")# debugging
             # Step 11: Meta-update θ ← θ + β∑Ti ∇θJ^ProMP_Ti(θ)
             # Average gradients across all tasks in the batch
-
             total_gradients = [
-                                beta*sum(layer_grads)
-                                for layer_grads in zip(*meta_gradients)
-                                ]
+                beta * sum(layer_grads)
+                for layer_grads in zip(*meta_gradients)
+            ]
+            #print("Check Update")
             with torch.no_grad():
                 for param, grad in zip(theta.parameters(), total_gradients):
-                    param.data.add_(grad)  # θ ← θ + α∇θ
-        
-    
+                    param.data.add_(grad)
+            #print("Check Update End")# debugging
+        #print("Check Test")# debugging
+        # 테스트 보상 측정
+        total_reward = 0
+        for task_idx in range(1):
+            env.reset()
+            env.scenario = sample_test_batch[task_idx]  # ❗이전 코드에서 task_batch 잘못 사용됨
+
+            test_model = inner_loop(state_dim, action_dim, theta.to(DEVICE), env, 1, ALPHA)
+            _, reward = test_model.simulation(theta)
+            total_reward += reward
+        print("Average_test_Reward:", total_reward/len(sample_test_batch))
+        writer.add_scalar("Average_test_Reward", total_reward / len(sample_test_batch), iteration)
+        #print("Check Test-end")# debugging
+    print(f"Learning_Time: {time.time()-start_time}")
+    # ✅ 프로파일러 step() 호출로 schedule 흐름 제어
+
     print("Training completed!")
-    
-    # Save final meta-policy
-    torch.save(theta, 'meta_policy_promp.pth')
+
+    if SAVE_MODEL:
+        torch.save(theta, os.path.join(SAVED_MODEL_PATH, 'meta_policy_promp.pth'))

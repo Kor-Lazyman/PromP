@@ -5,9 +5,10 @@ from config_SimPy import *
 # Using correction option
 USE_CORRECTION = False
 
-BUFFER_SIZE = 100000
-BATCH_SIZE = 20  
-LEARNING_RATE = 3e-4
+#BUFFER_SIZE = 100000
+TASK_BATCH_SIZE = 5 # batch size of task 
+BATCH_SIZE = 20  # batch size of inner loop
+
 GAMMA = 0.99
 CLIP_EPSILON = 0.2
 UPDATE_STEPS = 10  
@@ -15,12 +16,15 @@ GAE_LAMBDA = 0.95
 ENT_COEF = 0.0
 VF_COEF = 0.5
 MAX_GRAD_NORM = 0.5
+
 N_MULTIPROCESS = 5
-META_PARAMETER_UPDATE = 100
-ALPHA = 3e-5
-BETA = 3e-5
+NUM_META_ITERATION = 1000
+META_PARAMETER_UPDATE = 100 # n(number of updates about each iteration)
+
+ALPHA = 3e-5 # inner_learning rate
+BETA = 3e-4 # outer learning rate
 ETA = 0.1
-DEVICE = "cpu"
+DEVICE = "cuda" # cuda or cpu
 # def Create_scenario():
 #     if DEMAND_DIST_TYPE == "UNIFORM":
 #         # Uniform distribution
@@ -56,9 +60,9 @@ DEVICE = "cpu"
 
 # Define dir's path
 DRL_TENSORBOARD = False  # When True for DRL
-EXPERIMENT_MAML = True  # When True for EXPERIMENT_MAML
+EXPERIMENT_MAML = False  # When True for EXPERIMENT_MAML
 EXPERIMENT_ADAPTATION = False  # When True for EXPERIMENT_ADAPTATION
-GRAPH_WRITER = True
+GRAPH_WRITER = False
 # Episode
 N_EPISODES = 3000  # Default: 5000
 
