@@ -46,7 +46,7 @@ daily_report_folder = os.path.join(result_csv_folder, "daily_report")
 
 # Define dir's path
 TENSORFLOW_LOGS = DEFINE_FOLDER(PAR_FOLDER)
-
+PROFILER_LOGS = DEFINE_FOLDER(os.path.join(parent_dir, "Tensorboard_logs_MAML_profiler"))
 STATE = save_path(STATE_folder)
 REPORT_LOGS = save_path(daily_report_folder)
 

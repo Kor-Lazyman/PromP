@@ -7,8 +7,11 @@ from GymWrapper import *
 from Def_Scenarios import *
 from model import *
 from torch.utils.tensorboard import SummaryWriter
-from torch.profiler import profile, record_function, ProfilerActivity
+from torch.profiler import profile, record_function, ProfilerActivity, schedule, tensorboard_trace_handler
 import random
+import time
+import torch
+import os
 
 if __name__ == '__main__':
     writer = SummaryWriter(log_dir=TENSORFLOW_LOGS)
@@ -16,75 +19,87 @@ if __name__ == '__main__':
     beta = BETA
     action_dim = [len(ACTION_SPACE) for _ in range(env.mat_count)]
     state_dim = len(env.reset())
-    # Meta-parameters (already set up as mentioned)
     batch_size = 16
     convergence_threshold = 1e-4
-    # Initialize meta-policy parameters θ
-    # Step 3: Sample batch of tasks Ti ~ ρ(T)
     scenarios = create_scenarios()
     task_batch, test_batch = split_scenarios(scenarios)
-    theta = ActorCritic(state_dim, action_dim)
-    for iteration in range(NUM_META_ITERATION):
-        start_time = time.time()
-        print(f"Iteration {iteration + 1}/{NUM_META_ITERATION}")
+    theta = ActorCritic(state_dim, action_dim).to(DEVICE)
 
-        
-        # Initialize gradient accumulator for meta-update
-        inner_optim = []
-        post_updated_trajectories = []
-        sample_task_batch = random.sample(task_batch, 5)
-        sample_test_batch = random.sample(test_batch, 5)
-        for n in range(META_PARAMETER_UPDATE):
-            meta_gradients = []
-            for task_idx in range(len(sample_task_batch)):
+    # 프로파일러 설정: 1 스텝 워밍업, 2 스텝 측정, 총 3 반복
+    prof_schedule = schedule(wait=1, warmup=1, active=10, repeat=1)
+    trace_handler = tensorboard_trace_handler(PROFILER_LOGS)
+    "Setting profiler"
+    with profile(
+        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+        schedule=prof_schedule,
+        on_trace_ready=trace_handler,
+        record_shapes=True,
+        profile_memory=True,
+        with_stack=True
+    ) as prof:
+
+        for iteration in range(NUM_META_ITERATION):
+            start_time = time.time()
+            print(f"Iteration {iteration + 1}/{NUM_META_ITERATION}")
+
+            # Step 3: tasks 샘플링
+            sample_task_batch = random.sample(task_batch, 5)
+            sample_test_batch = random.sample(test_batch, 5)
+
+            # --- Inner/Outer 루프 프로파일링 ---
+            with record_function("meta_iteration"):
+                inner_optim = []
+                post_updated_trajectories = []
+
+                for n in range(META_PARAMETER_UPDATE):
+                    meta_gradients = []
+                    for task_idx, task in enumerate(sample_task_batch):
+                        env.reset()
+                        env.scenario = task
+
+                        if n == 0:
+                            with record_function("inner_first_optimization"):
+                                inner = inner_loop(
+                                    state_dim, action_dim, theta, env, 1, ALPHA
+                                )
+                                theta_old, post_traj = inner._first_optimization()
+                                inner_optim.append(OuterLoopOptimizer(ALPHA, theta_old))
+                                post_updated_trajectories.append(post_traj)
+
+                        with record_function("compute_meta_gradient"):
+                            grad = inner_optim[task_idx].optimizer(
+                                post_updated_trajectories[task_idx],
+                                theta, state_dim, action_dim
+                            )
+                            meta_gradients.append(grad)
+
+                    # meta-update
+                    with record_function("meta_update"):
+                        total_gradients = [
+                            beta * sum(layer_grads)
+                            for layer_grads in zip(*meta_gradients)
+                        ]
+                        for param, grad in zip(theta.parameters(), total_gradients):
+                            param.data.add_(grad)
+
+            # 테스트 평가
+            total_reward = 0.0
+            for task in sample_test_batch[:1]:
                 env.reset()
-                env.scenario = sample_task_batch[task_idx]
+                env.scenario = task
+                test_model = inner_loop(state_dim, action_dim, theta, env, 1, ALPHA)
+                _, reward = test_model.simulation(theta)
+                total_reward += reward
 
-                if n == 0:
-                    #print("Check inner") # debugging
-                    # Step 8: Sample pre-update trajectories using current policy πθ            
-                    # Step 9: Compute adapted parameters θ'0,i using inner loop
-                    inner = inner_loop(state_dim, action_dim, theta.to(DEVICE), env, 1, ALPHA)
-                    # Step 10: Sample post-update trajectories using adapted policy πθ'
-                    theta_old, post_updated_trajectorie = inner._first_optimization()
+            avg_reward = total_reward / len(sample_test_batch)
+            print("Average_test_Reward:", avg_reward)
+            writer.add_scalar("Average_test_Reward", avg_reward, iteration)
 
-                    inner_optim.append(OuterLoopOptimizer(ALPHA, theta_old))
-                    post_updated_trajectories.append(post_updated_trajectorie)
-                #print("Check gradient") # debugging
-                meta_gradients.append(
-                    inner_optim[task_idx].optimizer(
-                        post_updated_trajectories[task_idx], theta, state_dim, action_dim
-                    )
-                )
-                #print("Check gradient end")# debugging
-            # Step 11: Meta-update θ ← θ + β∑Ti ∇θJ^ProMP_Ti(θ)
-            # Average gradients across all tasks in the batch
-            total_gradients = [
-                beta * sum(layer_grads)
-                for layer_grads in zip(*meta_gradients)
-            ]
-            #print("Check Update")
-            with torch.no_grad():
-                for param, grad in zip(theta.parameters(), total_gradients):
-                    param.data.add_(grad)
-            #print("Check Update End")# debugging
-        #print("Check Test")# debugging
-        # 테스트 보상 측정
-        total_reward = 0
-        for task_idx in range(1):
-            env.reset()
-            env.scenario = sample_test_batch[task_idx]  # ❗이전 코드에서 task_batch 잘못 사용됨
+            print(f"Iteration time: {time.time() - start_time:.2f}s")
 
-            test_model = inner_loop(state_dim, action_dim, theta.to(DEVICE), env, 1, ALPHA)
-            _, reward = test_model.simulation(theta)
-            total_reward += reward
-        print("Average_test_Reward:", total_reward/len(sample_test_batch))
-        writer.add_scalar("Average_test_Reward", total_reward / len(sample_test_batch), iteration)
-        #print("Check Test-end")# debugging
-    print(f"Learning_Time: {time.time()-start_time}")
-    # ✅ 프로파일러 step() 호출로 schedule 흐름 제어
-
-    print("Training completed!")
+            # 프로파일러 스텝
+            prof.step()
+    print("Training & Profiling completed!")
 
     if SAVE_MODEL:
         torch.save(theta, os.path.join(SAVED_MODEL_PATH, 'meta_policy_promp.pth'))
