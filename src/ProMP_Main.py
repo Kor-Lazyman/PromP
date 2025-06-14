@@ -88,7 +88,7 @@ if __name__ == '__main__':
     
     # "Setting profiler"
     if PROFILER:
-        on_trace_ready = torch.profiler.tensorboard_trace_handler(PROFILER_LOGS))
+        on_trace_ready = torch.profiler.tensorboard_trace_handler(PROFILER_LOGS)
         with profile(
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             record_shapes=True,
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
         #prof.export_chrome_trace(os.path.join(PROFILER_LOGS,"trace.json"))
     else:
-        for iteration in range(1):
+        for iteration in range(NUM_META_ITERATION):
             start_time = time.time()
             print(f"Iteration {iteration + 1}/{NUM_META_ITERATION}")
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
             inner_optim = []
             post_updated_trajectories = []
 
-            for n in range(1):
+            for n in range(META_PARAMETER_UPDATE):
                 meta_gradients = []
                 for task_idx, task in enumerate(sample_task_batch):
                     env.reset()
@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
                 # 테스트 평가
                 total_reward = 0.0
-                for task in sample_test_batch[:1]:
+                for task in sample_test_batch:
                     env.reset()
                     env.scenario = task
                     test_model = inner_loop(state_dim, action_dim, theta, env, 1, ALPHA)
