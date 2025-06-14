@@ -146,22 +146,20 @@ if __name__ == '__main__':
                     for param, grad in zip(theta.parameters(), total_gradients):
                         param.data.add_(grad)
 
-                # 테스트 평가
-                total_reward = 0.0
-                for task in sample_test_batch:
-                    env.reset()
-                    env.scenario = task
-                    test_model = inner_loop(state_dim, action_dim, theta, env, 1, ALPHA)
-                    _, reward = test_model.simulation(theta)
-                    total_reward += reward
+            # 테스트 평가
+            total_reward = 0.0
+            for task in sample_test_batch:
+                env.reset()
+                env.scenario = task
+                test_model = inner_loop(state_dim, action_dim, theta, env, 1, ALPHA)
+                _, reward = test_model.simulation(theta)
+                total_reward += reward
 
-                avg_reward = total_reward / len(sample_test_batch)
-                print("Average_test_Reward:", avg_reward)
-                writer.add_scalar("Average_test_Reward", avg_reward, iteration)
+            avg_reward = total_reward / len(sample_test_batch)
+            print("Average_test_Reward:", avg_reward)
+            writer.add_scalar("Average_test_Reward", avg_reward, iteration)
 
-                print(f"Iteration time: {time.time() - start_time:.2f}s")
-
-                # 프로파일러 스텝
+            print(f"Iteration time: {time.time() - start_time:.2f}s")
 
         print("Training & Profiling completed!")
 
