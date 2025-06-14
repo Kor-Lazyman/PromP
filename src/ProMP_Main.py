@@ -7,7 +7,7 @@ from GymWrapper import *
 from Def_Scenarios import *
 from model import *
 from torch.utils.tensorboard import SummaryWriter
-import torch.autograd.profiler as profiler
+from torch.profiler import profile, record_function, ProfilerActivity, schedule, tensorboard_trace_handler
 import random
 import time
 import torch
@@ -30,7 +30,7 @@ def train(theta):
     sample_test_batch = random.sample(test_batch, 5)
 
     # --- Inner/Outer 루프 프로파일링 ---
-    with profiler.record_function("meta_iteration"):
+    with record_function("meta_iteration"):
             inner_optim = []
             post_updated_trajectories = []
 
@@ -41,7 +41,7 @@ def train(theta):
                     env.scenario = task
 
                     if n == 0:
-                        with profiler.record_function("inner_first_optimization"):
+                        with record_function("inner_first_optimization"):
                             inner = inner_loop(
                                 state_dim, action_dim, theta, env, 1, ALPHA
                             )
@@ -49,7 +49,7 @@ def train(theta):
                             inner_optim.append(OuterLoopOptimizer(ALPHA, theta_old))
                             post_updated_trajectories.append(post_traj)
 
-                with profiler.record_function("compute_meta_gradient"):
+                with record_function("compute_meta_gradient"):
                     grad = inner_optim[task_idx].optimizer(
                         post_updated_trajectories[task_idx],
                         theta, state_dim, action_dim
@@ -57,7 +57,7 @@ def train(theta):
                     meta_gradients.append(grad)
 
             # meta-update
-            with profiler.record_function("meta_update"):
+            with record_function("meta_update"):
                 total_gradients = [
                     beta * sum(layer_grads)
                     for layer_grads in zip(*meta_gradients)
@@ -88,8 +88,13 @@ if __name__ == '__main__':
     
     # "Setting profiler"
     if PROFILER:
-        on_trace_ready = torch.profiler.tensorboard_trace_handler(os.path.join(PROFILER_LOGS,"trace.json"))
-        with profiler.profile(with_stack=True, profile_memory=True) as prof:
+        on_trace_ready = torch.profiler.tensorboard_trace_handler(PROFILER_LOGS))
+        with profile(
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True
+        ) as prof:
             theta = ActorCritic(state_dim, action_dim).to(DEVICE)
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
