@@ -54,6 +54,6 @@ graph_log = os.path.join(parent_dir, "result_graph_folder")
 GRAPH_LOG = DEFINE_FOLDER(graph_log)
 
 # Saved Model
-SAVED_MODEL_PATH = save_path(os.path.join(parent_dir, "Saved_Model"))
+SAVED_MODEL_PATH = DEFINE_FOLDER(os.path.join(parent_dir, "Saved_Model"))
 SAVE_MODEL = True
 

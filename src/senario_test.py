@@ -5,7 +5,7 @@ from config_RL import *
 from Def_Scenarios import * 
 import time
 
-aseembly_process = "AP2"
+aseembly_process = "AP3"
 # Start timing the computation
 start_time = time.time()
 
