@@ -28,23 +28,23 @@ def test_model(env, tasks, all_inner_thetas, device, step):
 
 # === 환경 기본 설정 ===
 device = torch.device("cpu")
-outer_iterations = NUM_META_ITERATION  # 예시 값
-meta_parameter_updates = META_PARAMETER_UPDATE # 예시 inner loop 반복 수
-penalty = KL_PENALTY
+outer_iterations = 100  # 예시 값
+meta_parameter_updates = 5 # 예시 inner loop 반복 수
+penalty = 0.02
 env = GymInterface()
 state_dim = len(env.reset())
 action_dims = [len(ACTION_SPACE) for _ in range(env.mat_count)]  # MultiDiscrete
 writer = SummaryWriter(log_dir=TENSORFLOW_LOGS)
 
 # === Outer 객체 생성 ===
-outer = ProMPOuter(state_dim, action_dims, env, penalty, device, beta=BETA)
+outer = ProMPOuter(state_dim, action_dims, env, penalty, device, beta=0.01)
 
 # === 전체 task 목록 생성 ===
 all_tasks = create_scenarios()
 start_time = time.time()
 
 # === outer loop 시작 ===
-for step in range(outer_iterations):
+for step in range(100):
     outer_start_time = time.time()
     
     # 현재 iteration에서 사용할 task 샘플링
@@ -53,14 +53,13 @@ for step in range(outer_iterations):
     all_mean_inner_kl = []
     
     # inner loop 반복
-    for n in range(meta_parameter_updates):
+    for n in range(5):
         # 첫 번째 inner step인 경우
         if n == 0:
-            test_model(env, tasks, all_inner_thetas, device, step)
+            
             inner_post_updated_trajectories = []
             # 각 task에 대해 inner loop 준비
             for task in tasks:
-                print(task, "start")
                 inner = ProMPInner(
                     state_dim, action_dims,
                     outer.theta,  # 현재 meta-parameter
@@ -76,7 +75,7 @@ for step in range(outer_iterations):
         # task별 inner-loop 결과를 기반으로 meta-업데이트
         outer.update(step, all_inner_thetas, all_mean_inner_kl, tasks, inner_post_updated_trajectories)
         torch.save(outer.theta, os.path.join(SAVED_MODEL_PATH, "entire_model.pth"))
-       
+    test_model(env, tasks, all_inner_thetas, device, step)
     print(f"Outer step learning time: {time.time()-outer_start_time}")
 print(f"Learing_time: {time.time()-start_time}")
 

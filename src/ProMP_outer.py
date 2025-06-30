@@ -3,7 +3,7 @@ from ProMP_Model import Model
 from utils.model import *
 from torch.optim.lr_scheduler import StepLR
 class ProMPOuter:
-    def __init__(self, state_dim, action_dim, env, penalty, device, beta=0.01, lr_step_size: int = 5,
+    def __init__(self, state_dim, action_dim, env, penalty, device, beta=0.001, lr_step_size: int = 5,
                  lr_gamma: float = 0.9):
         self.device = device
         self.env = env

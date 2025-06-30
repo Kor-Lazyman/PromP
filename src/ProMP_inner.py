@@ -10,7 +10,7 @@ class ProMPInner:
         self.task = task
         self.batch_size = 20
         self.epochs = 5
-        self.alpha = ALPHA  # 고정 inner-loop step size
+        self.alpha = 0.0001  # 고정 inner-loop step size
 
         # θ는 기준점으로 고정
         self.theta = theta
@@ -23,12 +23,11 @@ class ProMPInner:
         self.env.scenario = self.task
         # 1. meta_parameter 정책 (θ)로 trajectory 수집
         pre_updated_trajectories = sample_trajectories(self.theta, self.env, self.device)
-        print(pre_updated_trajectories[1])
         # 2. Trajectory → 배치화
         #batches = utils.make_trajectorie_batches(pre_updated_trajectories, self.batch_size)
         # 3. Inner-loop 학습
         kl_divergences = []
-        for _ in range(5):
+        for _ in range(1):
             '''
             for batch in batches:
                 surr_obj = utils.likelihood(self.theta_old, self.theta, batch, self.env, self.device, "inner")

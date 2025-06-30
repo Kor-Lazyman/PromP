@@ -22,8 +22,8 @@ NUM_META_ITERATION = 1000
 META_PARAMETER_UPDATE = 100 # n(number of updates about each iteration)
 
 PROFILER = False
-ALPHA = 3e-5 # inner_learning rate
-BETA = 3e-4 # outer learning rate
+ALPHA = 3e-3 # inner_learning rate
+BETA = 0.01 # outer learning rate
 ETA = 0.1
 DEVICE = "cpu" # cuda or cpu
 # def Create_scenario():

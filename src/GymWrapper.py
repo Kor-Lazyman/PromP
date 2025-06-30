@@ -76,7 +76,7 @@ class GymInterface(gym.Env):
         if RL_ALGORITHM == "PPO":
             # Define action space
             actionSpace = []
-            for i in range(len(I)):
+            for i in range(len(I[self.assembly_process])):
                 if I[self.assembly_process][i]["TYPE"] == "Material":
                     actionSpace.append(len(ACTION_SPACE))
             self.action_space = spaces.MultiDiscrete(actionSpace)
@@ -86,10 +86,10 @@ class GymInterface(gym.Env):
             # DAILY_CHANGE + INTRANSIT + REMAINING_DEMAND
             if USE_CORRECTION:
                 os = [102 for _ in range(
-                    len(I)*(1+DAILY_CHANGE)+self.mat_count*INTRANSIT+1)]
+                    len(I[self.assembly_process])*(1+DAILY_CHANGE)+self.mat_count*INTRANSIT+1)]
             else:
                 os = [
-                    INVEN_LEVEL_MAX * 2 + 1 for _ in range(len(I)*(1+DAILY_CHANGE)+self.mat_count*INTRANSIT+1)]
+                    INVEN_LEVEL_MAX * 2 + 1 for _ in range(len(I[self.assembly_process])*(1+DAILY_CHANGE)+self.mat_count*INTRANSIT+1)]
             '''
             - Inventory Level of Product
             - Daily Change of Product
@@ -223,7 +223,7 @@ class GymInterface(gym.Env):
         # Make State for RL
         state = []
         # Update STATE_ACTION_REPORT_REAL
-        for id in range(len(I)):
+        for id in range(len(I[self.assembly_process])):
             # ID means Item_ID, 7 means to the length of the report for one item
             # append On_Hand_inventory
             state.append(
