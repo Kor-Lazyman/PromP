@@ -1,0 +1,13 @@
+아래 패키지를 설치 후 문제 발생시 venv_packages 참고하여 package 설치
+numpy
+joblib
+gym==0.10.5
+scipy
+PyPrind
+Pillow
+moviepy
+mpi4py
+click
+tensorflow>=1.4.0
+cloudpickle
+matplotlib

@@ -54,6 +54,7 @@ class Trainer(object):
         self.n_itr = n_itr
         self.start_itr = start_itr
         self.num_inner_grad_steps = num_inner_grad_steps
+        self.save_folder = save_folder
         if sess is None:
             sess = tf.Session()
         self.sess = sess
@@ -137,7 +138,7 @@ class Trainer(object):
                 logger.log("Optimizing policy...")
                 # This needs to take all samples_data so that it can construct graph for meta-optimization.
                 time_outer_step_start = time.time()
-                self.algo.optimize_policy(all_samples_data)
+                self.algo.optimize_policy(all_samples_data)# 여기설명
 
                 """ ------------------- Logging Stuff --------------------------"""
                 logger.logkv('Itr', itr)
@@ -161,7 +162,8 @@ class Trainer(object):
                 logger.dumpkvs()
 
         logger.log("Training finished")
-        saver.save(sess, './model/my_model.ckpt')
+
+        saver.save(sess, f"{self.save_folder}/model")
         self.sess.close()        
 
     def get_itr_snapshot(self, itr):

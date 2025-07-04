@@ -10,7 +10,7 @@ from envs.simpy_envs.log_SimPy import *
 from envs.simpy_envs.log_RL import *
 import pandas as pd
 import matplotlib.pyplot as plt
-from envs.simpy_envs.utils.scenarios import *
+from envs.simpy_envs.scenarios import *
 class MetaEnv(Env):
     """
     Wrapper around OpenAI gym environments, interface for meta learning
