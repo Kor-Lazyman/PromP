@@ -1,5 +1,5 @@
 from meta_policy_search.baselines.linear_baseline import LinearFeatureBaseline
-import meta_policy_search.envs.simpy_envs.promp_env as simpy_env
+import envs.simpy_envs.promp_env as simpy_env
 from meta_policy_search.meta_algos.pro_mp import ProMP
 from meta_policy_search.meta_trainer import Trainer
 from meta_policy_search.samplers.meta_sampler import MetaSampler
@@ -7,7 +7,8 @@ from meta_policy_search.samplers.meta_sample_processor import MetaSampleProcesso
 from meta_policy_search.policies.meta_gaussian_mlp_policy import MetaGaussianMLPPolicy
 from meta_policy_search.utils import logger
 from meta_policy_search.utils.utils import set_seed, ClassEncoder
-from meta_policy_search.envs.simpy_envs.config_SimPy import *
+from envs.simpy_envs.config_SimPy import *
+from envs.simpy_envs.config_folders import *
 import numpy as np
 import tensorflow as tf
 import os
@@ -66,7 +67,9 @@ def main(config):
         sampler=sampler,
         sample_processor=sample_processor,
         n_itr=config['n_itr'],
-        num_inner_grad_steps=config['num_inner_grad_steps'],
+        tensor_log=TENSORFLOW_LOGS,
+        save_folder=SAVED_MODEL_PATH,
+        num_inner_grad_steps=config['num_inner_grad_steps']
     )
 
     df = trainer.train()
@@ -89,7 +92,7 @@ if __name__=="__main__":
 
         # sampler config
         'rollouts_per_meta_task': 20, # number trajectorys for adapting inner loop
-        'max_path_length': 200,
+        'max_path_length': SIM_TIME,
         'parallel': True, # Multi_processing
 
         # sample processor config
@@ -109,7 +112,7 @@ if __name__=="__main__":
         'target_inner_step': 0.01,
         'init_inner_kl_penalty': 5e-4,
         'adaptive_inner_kl_penalty': False, # whether to use an adaptive or fixed KL-penalty coefficient
-        'n_itr': 1, # number of overall training iterations
+        'n_itr': 1001, # number of overall training iterations
         'meta_batch_size': 5, # number of sampled meta-tasks per iterations
         'num_inner_grad_steps': 1, # number of inner / adaptation gradient steps
 

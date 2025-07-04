@@ -1,16 +1,16 @@
 from gym.core import Env
 import numpy as np
 import random
-from meta_policy_search.envs.simpy_envs.config_SimPy import *
+from envs.simpy_envs.config_SimPy import *
 from gym import spaces
 import numpy as np
-from meta_policy_search.envs.simpy_envs.config_RL import *
-import meta_policy_search.envs.simpy_envs.environment as env
-from meta_policy_search.envs.simpy_envs.log_SimPy import *
-from meta_policy_search.envs.simpy_envs.log_RL import *
+from envs.simpy_envs.config_RL import *
+import envs.simpy_envs.environment as env
+from envs.simpy_envs.log_SimPy import *
+from envs.simpy_envs.log_RL import *
 import pandas as pd
 import matplotlib.pyplot as plt
-from meta_policy_search.envs.simpy_envs.utils.scenarios import *
+from envs.simpy_envs.utils.scenarios import *
 class MetaEnv(Env):
     """
     Wrapper around OpenAI gym environments, interface for meta learning

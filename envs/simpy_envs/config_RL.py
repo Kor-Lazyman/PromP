@@ -1,6 +1,6 @@
 import os
 import shutil
-from meta_policy_search.envs.simpy_envs.config_SimPy import *
+from envs.simpy_envs.config_SimPy import *
 
 # Using correction option
 USE_CORRECTION = False

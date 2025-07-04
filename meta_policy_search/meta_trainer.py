@@ -39,6 +39,8 @@ class Trainer(object):
             sample_processor,
             policy,
             n_itr,
+            tensor_log,
+            save_folder,
             start_itr=0,
             num_inner_grad_steps=1,
             sess=None,
@@ -59,8 +61,9 @@ class Trainer(object):
             "Rewards": [],
             "Times" : []
         }
-        self.writer = SummaryWriter(log_dir='./logs')
+        self.writer = SummaryWriter(log_dir=tensor_log)
     def train(self):
+        saver = tf.train.Saver()
         """
         Trains policy on env using algo
 
@@ -91,7 +94,6 @@ class Trainer(object):
                 all_samples_data, all_paths = [], []
                 list_sampling_time, list_inner_step_time, list_outer_step_time, list_proc_samples_time = [], [], [], []
                 start_total_inner_time = time.time()
-                temp= []
                 for step in range(self.num_inner_grad_steps+1):
                     logger.log('** Step ' + str(step) + ' **')
 
@@ -121,6 +123,7 @@ class Trainer(object):
                     if step == self.num_inner_grad_steps:
                         reward = self.env.log_diagnostics(sum(list(paths.values()), []))
                         self.report["Rewards"].append(reward)
+                        self.writer.add_scalar("Reward", reward, global_step=itr)
                     # train_writer = tf.summary.FileWriter('/home/ignasi/Desktop/meta_policy_search_graph',
                     #                                      sess.graph)
                     list_inner_step_time.append(time.time() - time_inner_step_start)
@@ -158,9 +161,7 @@ class Trainer(object):
                 logger.dumpkvs()
 
         logger.log("Training finished")
-        df = pd.DataFrame(self.report)
-        print(df)
-        df.to_csv(f"./test_data.csv")
+        saver.save(sess, './model/my_model.ckpt')
         self.sess.close()        
 
     def get_itr_snapshot(self, itr):

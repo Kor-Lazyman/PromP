@@ -1,7 +1,7 @@
 import simpy
 import numpy as np
-from meta_policy_search.envs.simpy_envs.config_SimPy import *  # Assuming this imports necessary configurations
-from meta_policy_search.envs.simpy_envs.log_SimPy import *  # Assuming this imports necessary logging functionalities
+from envs.simpy_envs.config_SimPy import *  # Assuming this imports necessary configurations
+from envs.simpy_envs.log_SimPy import *  # Assuming this imports necessary logging functionalities
 
 
 class Inventory:
