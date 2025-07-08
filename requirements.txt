@@ -12,3 +12,4 @@ pip install matplotlib==3.3.4
 pip install simpy==3.0.13
 pip install tensorboardx==2.6.2.2
 pip install mpi4py==4.0.3
+conda install -c conda-forge mpi4py
