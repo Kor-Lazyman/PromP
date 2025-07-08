@@ -1,3 +1,4 @@
+conda create -n ProMP_Tensorlfow_2 python==3.9
 pip install numpy==1.19.5
 pip install joblib==1.1.1
 pip install gym==0.10.5
