@@ -28,7 +28,7 @@ def create_scenarios():
     
     # Define the uniform demand distribution
     demand_uniform = [
-        {"Dist_Type": "UNIFORM", "min": 14, "max": 14}
+        {"Dist_Type": "UNIFORM", "min": min_val, "max": max_val}
         for min_val, max_val in demand_uniform_range
     ]
 
@@ -42,7 +42,7 @@ def create_scenarios():
     
     # Define the uniform lead time distribution
     leadtime_uniform = [
-        {"Dist_Type": "UNIFORM", "min": 1, "max": 1}
+        {"Dist_Type": "UNIFORM", "min": min_val, "max": max_val}
         for min_val, max_val in leadtime_uniform_range
     ]
 

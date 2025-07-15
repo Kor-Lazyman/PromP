@@ -3,6 +3,9 @@ import numpy as np
 import time
 from meta_policy_search.utils import logger
 from tensorboardX import SummaryWriter
+from tensorflow.python.client import device_lib
+
+tf.config.set_visible_devices([], "GPU")
 tf.compat.v1.disable_eager_execution()# Api for using tf1 at tf2
 class Trainer(object):
     """
@@ -58,10 +61,7 @@ class Trainer(object):
         if sess is None:
             sess = tf.compat.v1.Session()
         self.sess = sess
-        self.report = {
-            "Rewards": [],
-            "Times" : []
-        }
+        self.reward = None
         self.writer = SummaryWriter(log_dir=tensor_log)
     def train(self):
         saver = tf.compat.v1.train.Saver()
@@ -78,7 +78,7 @@ class Trainer(object):
                 sampler.update_goals()
         """
         with self.sess.as_default() as sess:
-
+            print(device_lib.list_local_devices())
             # initialize uninitialized vars  (only initialize vars that were not loaded)
             uninit_vars = [var for var in tf.compat.v1.global_variables() if not sess.run(tf.compat.v1.is_variable_initialized(var))]
             sess.run(tf.compat.v1.variables_initializer(uninit_vars))
@@ -123,7 +123,7 @@ class Trainer(object):
 
                     if step == self.num_inner_grad_steps:
                         reward = self.env.log_diagnostics(sum(list(paths.values()), []))
-                        self.report["Rewards"].append(reward)
+                        self.reward = reward
                         self.writer.add_scalar("Reward", reward, global_step=itr)
                     # train_writer = tf.summary.FileWriter('/home/ignasi/Desktop/meta_policy_search_graph',
                     #                                      sess.graph)
@@ -132,9 +132,6 @@ class Trainer(object):
 
                 time_maml_opt_start = time.time()
                 """ ------------------ Outer Policy Update ---------------------"""
-                self.report["Times"].append(time.time()-start_time)
-                
-
                 logger.log("Optimizing policy...")
                 # This needs to take all samples_data so that it can construct graph for meta-optimization.
                 time_outer_step_start = time.time()

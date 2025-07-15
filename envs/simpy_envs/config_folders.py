@@ -46,4 +46,5 @@ if "MainProcess" == current_process().name:
     # Saved Model
     SAVED_MODEL_PATH = save_path(os.path.join(parent_dir, "Saved_Model"))
     SAVE_MODEL = True
+    HYPERPARAMETER_LOG = save_path(os.path.join(parent_dir, "Optuna_result"))
 
