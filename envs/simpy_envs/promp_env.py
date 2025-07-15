@@ -17,9 +17,7 @@ class MetaEnv(Env):
     def __init__(self):
         self.actions = []
         self.all_tasks = create_scenarios()
-
-        self.outer_end = False
-        self.mat_count = 1
+        self.mat_count = None
 
         if ASSEMBLY_PROCESS == "AP1":
             self.mat_count = 1
@@ -32,32 +30,9 @@ class MetaEnv(Env):
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
         super(MetaEnv, self).__init__()
 
-        # Scenario initialization for the demand
-        if DEMAND_DIST_TYPE == "UNIFORM":
-            # demand_dist = {"Dist_Type": "UNIFORM",
-            #                "min": 8, "max": 15}
-            # demand_dist = {"Dist_Type": "UNIFORM",
-            #                "min": 10, "max": 13}
-            # demand_dist = {"Dist_Type": "UNIFORM",
-            #                "min": 8, "max": 11}
-            demand_dist = {"Dist_Type": "UNIFORM",
-                           "min": 10, "max": 11}  # Default scenario
-        elif DEMAND_DIST_TYPE == "GAUSSIAN":
-            demand_dist = {"Dist_Type": "GAUSSIAN",
-                           "mean": 11, "std": 4}  # Default scenario
-        # Scenario initialization for the demand
-        if LEAD_DIST_TYPE == "UNIFORM":
-            # leadtime_dist = {"Dist_Type": "UNIFORM",
-            #                  "min": 1, "max": 3}
-            leadtime_dist = {"Dist_Type": "UNIFORM",
-                             "min": 1, "max": 2}  # Default scenario
-        elif LEAD_DIST_TYPE == "GAUSSIAN":
-            leadtime_dist = {"Dist_Type": "GAUSSIAN",
-                             "mean": 3, "std": 3}  # Default scenario
-        self.scenario = {"DEMAND": demand_dist, "LEADTIME": leadtime_dist}
+        self.scenario = None
 
         self.shortages = 0
-        self.total_reward_over_episode = []
         self.total_reward = 0
 
         # Record the cumulative value of each cost
@@ -71,7 +46,7 @@ class MetaEnv(Env):
         
         os = []
         # Define action space
-        self.action_space = spaces.Box(low = 0, high = 6, shape = (self.mat_count, 1), dtype = int)
+        self.action_space = spaces.Box(low = 0, high = len(ACTION_SPACE), shape = (self.mat_count, 1), dtype = int)
         # if self.scenario["Dist_Type"] == "UNIFORM":
         #    k = INVEN_LEVEL_MAX*2+(self.scenario["max"]+1)
 
@@ -150,10 +125,7 @@ class MetaEnv(Env):
             for _ in range(len(I[self.assembly_process])):
                 if I[self.assembly_process][_]["TYPE"] == "Material":
                     # Set action as predicted value
-                    if CONSISTENT_ACTION:
-                        I[self.assembly_process][_]["LOT_SIZE_ORDER"] = ORDER_QTY[i]
-                    else:
-                        I[self.assembly_process][_]["LOT_SIZE_ORDER"] =  np.round(action[i])
+                    I[self.assembly_process][_]["LOT_SIZE_ORDER"] =  np.round(action[i])
 
                     i += 1
         elif RL_ALGORITHM == "DQN":
@@ -208,27 +180,6 @@ class MetaEnv(Env):
 
         # Check if the simulation is done
         done = self.simpy_env.now >= SIM_TIME * 24  # 예: SIM_TIME일 이후에 종료
-        if done == True:
-            '''
-            if DRL_TENSORBOARD or EXPERIMENT_ADAPTATION:
-                self.writer.add_scalar(
-                    "reward", self.total_reward, global_step=self.cur_episode)
-                # Log each cost ratio at the end of the episode
-                for cost_name, cost_value in self.cost_dict.items():
-                    self.writer.add_scalar(
-                        cost_name, cost_value, global_step=self.cur_episode)
-                self.writer.add_scalars(
-                    'Cost', self.cost_dict, global_step=self.cur_episode)
-                print("Episode: ", self.cur_episode,
-                      " / Total reward: ", self.total_reward)
-
-            if self.outer_end == True and self.scenario_batch_size == self.cur_inner_loop:
-                self.writer.add_scalar(
-                    "inner_end/reward", self.total_reward, global_step=self.cur_episode)
-            '''
-            #print(self.actions[0])
-            self.total_reward_over_episode.append(self.total_reward)
-            self.total_reward = 0
 
         info = {}  # 추가 정보 (필요에 따라 사용)
 

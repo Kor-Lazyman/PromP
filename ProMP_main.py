@@ -12,8 +12,6 @@ from envs.simpy_envs.config_folders import *
 import numpy as np
 import tensorflow as tf
 import os
-import json
-import argparse
 import time
 
 tf.compat.v1.disable_eager_execution()
@@ -76,12 +74,6 @@ def main(config):
 if __name__=="__main__":
     idx = int(time.time())
 
-    parser = argparse.ArgumentParser(description='ProMP: Proximal Meta-Policy Search')
-    parser.add_argument('--config_file', type=str, default='', help='json file with run specifications')
-    parser.add_argument('--dump_path', type=str, default=meta_policy_search_path + '/data/pro-mp/run_%d' % idx)
-
-    args = parser.parse_args()
-
     config = {
         'seed': 1,
 
@@ -117,12 +109,6 @@ if __name__=="__main__":
 
     }
 
-    # configure logger
-    logger.configure(dir=args.dump_path, format_strs=['stdout', 'log', 'csv'],
-                     snapshot_mode='last_gap')
-
-    # dump run configuration before starting training
-    json.dump(config, open(args.dump_path + '/params.json', 'w'), cls=ClassEncoder)
 
     # start the actual algorithm
     main(config)

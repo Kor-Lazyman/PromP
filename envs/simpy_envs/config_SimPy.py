@@ -278,13 +278,9 @@ P = {
 DAILY_CHANGE = 0  # 0: False / 1: True
 INTRANSIT = 1  # 0: False / 1: True
 
-
 # Create demand
-
-
 def DEMAND_QTY_FUNC(scenario):
     # Uniform distribution
-
     if scenario["Dist_Type"] == "UNIFORM":
         return random.randint(scenario['min'], scenario["max"])
     # Gaussian distribution
@@ -299,7 +295,6 @@ def DEMAND_QTY_FUNC(scenario):
             return demand
 
 def SUP_LEAD_TIME_FUNC(lead_time_dict):
-
     if lead_time_dict["Dist_Type"] == "UNIFORM":
         # Lead time의 최대 값은 Action Space의 최대 값과 곱하였을 때 INVEN_LEVEL_MAX의 2배를 넘지 못하게 설정 해야 함 (INTRANSIT이 OVER되는 현상을 방지 하기 위해서)
         # SUP_LEAD_TIME must be an integer
@@ -316,51 +311,14 @@ def SUP_LEAD_TIME_FUNC(lead_time_dict):
         # SUP_LEAD_TIME must be an integer
         return int(round(lead_time))
 
-
 # Validation
-# 시뮬레이션 Validaition을 위한 코드 차후 지울것
-VALIDATION = False
-
-
-def validation_input(day):
-    action = [2, 4, 2, 2, 2]
-    return action
-
-
-# Define parent dir's path
-current_dir = os.path.dirname(__file__)
-parent_dir = os.path.dirname(current_dir)
-result_Graph_folder = os.path.join(parent_dir, "result_Graph")
-
 # State space
 # if this is not 0, the length of state space of demand quantity is not identical to INVEN_LEVEL_MAX
 INVEN_LEVEL_MIN = 0
 INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
-# DEMAND_QTY_MIN = 10
-# DEMAND_QTY_MAX = 16
 
 # Simulation
 SIM_TIME = 200  # Default: 200 [days] per episode
-
-
-# Distribution types
-DEMAND_DIST_TYPE = "UNIFORM"  # GAUSSIAN, UNIFORM
-LEAD_DIST_TYPE = "UNIFORM"  # GAUSSIAN, UNIFORM
-
-'''
-# Count for intransit inventory
-MAT_COUNT = 0
-for id in I.keys():
-    if I[id]["TYPE"] == "Material":
-        MAT_COUNT += 1
-'''
-
-# Ordering rules -> If not used, the list should be left empty: []
-ORDER_QTY = [2, 4, 2]
-# ORDER_QTY = [1] # AP1
-# ORDER_QTY = [1, 1, 1, 1, 1]  # AP3
-
-# REORDER_LEVEL = 0
 
 # Print logs
 PRINT_SIM = False
@@ -368,9 +326,4 @@ ASSEMBLY_PROCESS = "AP3"
 # PRINT_LOG_TIMESTEP = True
 # PRINT_LOG_DAILY_REPORT = True
 
-# Cost model
-# If False, the total cost is calculated based on the inventory level for every 24 hours.
-# Otherwise, the total cost is accumulated every hour.
-HOURLY_COST_MODEL = True
-VISUALIAZTION = [1, 1, 1]  # PRINT RAW_MATERIAL, WIP, PRODUCT
 TIME_CORRECTION = 0.0001

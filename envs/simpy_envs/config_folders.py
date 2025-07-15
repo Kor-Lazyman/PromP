@@ -26,23 +26,10 @@ if "MainProcess" == current_process().name:
     # Define parent dir's path
     current_dir = os.path.dirname(__file__)
     parent_dir = os.path.dirname(current_dir)
-
-    if EXPERIMENT_MAML:
-        PAR_FOLDER = os.path.join(
-            parent_dir, "Tensorboard_logs_Experiment_MAML")
-    elif EXPERIMENT_ADAPTATION:
-        PAR_FOLDER = os.path.join(
-            parent_dir, "Tensorboard_logs_Experiment_ADAPT")
-    elif DRL_TENSORBOARD:
-        PAR_FOLDER = os.path.join(
-            parent_dir, "Tensorboard_logs_Experiment_DRL")
-    else:
-        PAR_FOLDER = os.path.join(
-            parent_dir, "Tensorboard_logs_MAML")
-
+    PAR_FOLDER = os.path.join(
+            parent_dir, "Tensorboard_logs_Experiment_ProMP")
     # Define dir's path
     TENSORFLOW_LOGS = DEFINE_FOLDER(PAR_FOLDER)
-
     # Saved Model
     SAVED_MODEL_PATH = save_path(os.path.join(parent_dir, "Saved_Model"))
     SAVE_MODEL = True
