@@ -1,4 +1,4 @@
-pip install numpy==1.19.5
+pip install numpy==1.22.4
 pip install joblib==1.1.1
 pip install gym==0.10.5
 pip install scipy==1.5.4
@@ -12,3 +12,4 @@ pip install matplotlib==3.3.4
 pip install simpy==3.0.13
 pip install tensorboardx==2.6.2.2
 pip install mpi4py==4.0.3
+pip install pandas==2.3.1
