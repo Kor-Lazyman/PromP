@@ -323,7 +323,7 @@ SIM_TIME = 200 # Default: 200 [days] per episode
 # Print logs
 PRINT_SIM = False
 ASSEMBLY_PROCESS = "AP3"
-SSPOLICY = True
+SSPOLICY = False
 # PRINT_LOG_TIMESTEP = True
 # PRINT_LOG_DAILY_REPORT = True
 
