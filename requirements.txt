@@ -7,9 +7,10 @@ pip install PyPrind==2.11.3
 pip install moviepy==1.0.3
 pip install click==8.0.4
 pip install tensorflow==2.6.0
+pip install keras==2.6.0
 pip install cloudpickle==2.2.1
 pip install matplotlib==3.3.4
 pip install simpy==3.0.13
 pip install tensorboardx==2.6.2.2
 pip install mpi4py==4.0.3
-pip install pandas==2.3.1
+pip install protobuf==3.20.0
