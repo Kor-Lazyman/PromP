@@ -108,7 +108,7 @@ if __name__=="__main__":
         'normalize_adv': True,
 
         # policy config
-        'hidden_sizes': (64, 64),
+        'hidden_sizes': (64, 64, 64),
         'learn_std': True, # whether to learn the standard deviation of the gaussian policy
 
         # E-MAML config
