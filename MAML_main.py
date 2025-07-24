@@ -2,7 +2,7 @@ from meta_policy_search.baselines.linear_baseline import LinearFeatureBaseline
 #from meta_policy_search.envs.mujoco_envs.half_cheetah_rand_direc import HalfCheetahRandDirecEnv
 #from meta_policy_search.envs.normalized_env import normalize
 import envs.simpy_envs.promp_env as simpy_env
-from meta_policy_search.meta_algos.trpo_maml import TRPOMAML
+from meta_policy_search.meta_algos.vpg_maml import VPGMAML
 from meta_policy_search.meta_trainer import Trainer
 from meta_policy_search.samplers.meta_sampler import MetaSampler
 from meta_policy_search.samplers.meta_sample_processor import MetaSampleProcessor
@@ -51,9 +51,8 @@ def main(config):
         normalize_adv=config['normalize_adv'],
     )
 
-    algo = TRPOMAML(
+    algo = VPGMAML(
         policy=policy,
-        step_size=config['step_size'],
         inner_type=config['inner_type'],
         inner_lr=config['inner_lr'],
         meta_batch_size=config['meta_batch_size'],
@@ -113,8 +112,8 @@ if __name__=="__main__":
         'learn_std': True, # whether to learn the standard deviation of the gaussian policy
 
         # E-MAML config
-        'inner_lr': 0.1, # adaptation step size
-        'learning_rate': 1e-3, # meta-policy gradient step size
+        'inner_lr': 0.002, # adaptation step size
+        'learning_rate': 0.0005, # meta-policy gradient step size
         'step_size': 0.01, # size of the TRPO trust-region
         'n_itr': 1001, # number of overall training iterations
         'meta_batch_size': 5, # number of sampled meta-tasks per iterations

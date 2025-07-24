@@ -5,14 +5,13 @@ from envs.simpy_envs.log_SimPy import *  # Assuming this imports necessary loggi
 
 
 class Inventory:
-    def __init__(self, env, item_id, holding_cost, assembly_process):
+    def __init__(self, env, item_id, holding_cost):
         # Initialize inventory object
         self.env = env
         self.item_id = item_id  # 0: product; others: WIP or material
         # Initial inventory level
-        self.assembly_process = assembly_process # What is the name of the scenario in this environment
-        #print(assembly_process)
-        self.on_hand_inventory = I[self.assembly_process][self.item_id]['INIT_LEVEL']
+        #print(ASSEMBLY_PROCESS)
+        self.on_hand_inventory = I[ASSEMBLY_PROCESS][self.item_id]['INIT_LEVEL']
         # Inventory in transition (e.g., being delivered)
         self.in_transition_inventory = 0
         self.capacity_limit = INVEN_LEVEL_MAX  # Maximum capacity of the inventory
@@ -21,8 +20,13 @@ class Inventory:
         '''
         Day / Inventory_Name / Inventory_Type / Inventory at the start of the day / Income_Inventory(Onhand) / Outgoing_inventory(Onhand) / Intransit_Inventory / Inventory at the end of the day
         '''
-        self.daily_inven_report = [f"Day {self.env.now // 24+1}", I[assembly_process][self.item_id]['NAME'],
-                                   I[assembly_process][self.item_id]['TYPE'], self.on_hand_inventory, 0, 0, 0, 0]
+        self.daily_inven_report = [f"Day {self.env.now // 24+1}", I[ASSEMBLY_PROCESS][self.item_id]['NAME'],
+                                   I[ASSEMBLY_PROCESS][self.item_id]['TYPE'], self.on_hand_inventory, 0, 0, 0, 0]
+        
+        """
+        # for validation
+        print(f"Holding_cost of {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}:", holding_cost)
+        """
         # Unit holding cost per hour
         self.unit_holding_cost = holding_cost / 24
         self.holding_cost_last_updated = 0.0  # Last time holding cost was updated
@@ -32,7 +36,7 @@ class Inventory:
         Update the demand quantity and log the event.
         """
         daily_events.append(
-            f"{present_daytime(self.env.now)}: Customer order of {I[self.assembly_process][0]['NAME']}                                 : {I[self.assembly_process][0]['DEMAND_QUANTITY']} units ")
+            f"{present_daytime(self.env.now)}: Customer order of {I[ASSEMBLY_PROCESS][0]['NAME']}                                 : {I[ASSEMBLY_PROCESS][0]['DEMAND_QUANTITY']} units ")
 
     def update_inven_level(self, quantity_of_change, inven_type, daily_events):
         """
@@ -57,7 +61,7 @@ class Inventory:
             # Check if inventory exceeds capacity limit
             if self.on_hand_inventory > self.capacity_limit:
                 daily_events.append(
-                    f"{present_daytime(self.env.now)}: Due to the upper limit of the inventory, {I[self.assembly_process][self.item_id]['NAME']} is wasted: {self.on_hand_inventory - self.capacity_limit}")
+                    f"{present_daytime(self.env.now)}: Due to the upper limit of the inventory, {I[ASSEMBLY_PROCESS][self.item_id]['NAME']} is wasted: {self.on_hand_inventory - self.capacity_limit}")
                 self.on_hand_inventory = self.capacity_limit
             # Check if inventory goes negative
             if self.on_hand_inventory < 0:
@@ -91,22 +95,22 @@ class Inventory:
 
 
 class Supplier:
-    def __init__(self, env, name, item_id, assembly_process):
+    def __init__(self, env, name, item_id):
         # Initialize supplier object
         self.env = env
         self.name = name
         self.item_id = item_id
-        self.assembly_process = assembly_process
 
     def deliver_to_manufacturer(self, procurement, material_qty, material_inventory, daily_events, lead_time_dict):
+
         """
         Deliver materials to the manufacturer after a certain lead time.
         """
-        I[self.assembly_process][self.item_id]["SUP_LEAD_TIME"] = SUP_LEAD_TIME_FUNC(lead_time_dict)
-        lead_time = I[self.assembly_process][self.item_id]["SUP_LEAD_TIME"]
+        I[ASSEMBLY_PROCESS][self.item_id]["SUP_LEAD_TIME"] = SUP_LEAD_TIME_FUNC(lead_time_dict)
+        lead_time = I[ASSEMBLY_PROCESS][self.item_id]["SUP_LEAD_TIME"]
         # Log the delivery event with lead time
         daily_events.append(
-            f"{self.env.now}: {I[self.assembly_process][self.item_id]['NAME']} will be delivered at {lead_time} days after         : {I[self.assembly_process][self.item_id]['LOT_SIZE_ORDER']} units")
+            f"{self.env.now}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']} will be delivered at {lead_time} days after         : {I[ASSEMBLY_PROCESS][self.item_id]['LOT_SIZE_ORDER']} units")
 
         # Wait for the lead time
         yield self.env.timeout(lead_time * 24)
@@ -117,20 +121,42 @@ class Supplier:
 
 
 class Procurement:
-    def __init__(self, env, item_id, purchase_cost, setup_cost, assembly_process):
+    def __init__(self, env, item_id, purchase_cost, setup_cost):
         self.env = env
         self.item_id = item_id
         self.unit_purchase_cost = purchase_cost
+        '''
+        #for validation
+        print("Purchase_cost:",purchase_cost)
+        '''
         self.unit_setup_cost = setup_cost
         self.order_qty = 0  # Initialize order quantity
-        self.assembly_process = assembly_process
-
+        # for SSpolicy
+        self.policy = None
+        self.lead_time_dict = None
+        self.Maximum_daily_consumption ={
+            "AP1":{
+                "MAT 1": 2
+            },
+            "AP2": {
+                "MAT 1": 2,
+                "MAT 2": 4,
+                "MAT 3": 2 
+            },
+            "AP3": {
+                "MAT 1": 2,
+                "MAT 2": 4,
+                "MAT 3": 2,
+                "MAT 4": 2,
+                "MAT 5": 2
+            }
+        }
     def receive_materials(self, material_qty, material_inventory, daily_events):
         """
         Process the receipt of materials and update inventory.
         """
         daily_events.append(
-            f"==============={I[self.assembly_process][self.item_id]['NAME']} Delivered ===============")
+            f"==============={I[ASSEMBLY_PROCESS][self.item_id]['NAME']} Delivered ===============")
 
         # Update in-transition inventory (reduce it)
         material_inventory.update_inven_level(
@@ -139,24 +165,33 @@ class Procurement:
         material_inventory.update_inven_level(
             material_qty, "ON_HAND", daily_events)
         daily_events.append(
-            f"{present_daytime(self.env.now)}: {I[self.assembly_process][self.item_id]['NAME']} has delivered                             : {material_qty} units ")  # Record when Material provide
+            f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']} has delivered                             : {material_qty} units ")  # Record when Material provide
 
     def order_material(self, supplier, inventory, daily_events, lead_time_dict):
         """
         Place orders for materials to the supplier.
         """
+        
         yield self.env.timeout(self.env.now)  # Wait for the next order cycle
         while True:
             daily_events.append(
-                f"==============={I[self.assembly_process][self.item_id]['NAME']}\'s Inventory ===============")
+                f"==============={I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s Inventory ===============")
 
             # Set the order size based on LOT_SIZE_ORDER and reorder level
             # order_size = ORDER_QTY[self.item_id-1]
-            order_size = I[self.assembly_process][self.item_id]["LOT_SIZE_ORDER"]
+            #order_size = 2
+            if SSPOLICY:
+                if I[ASSEMBLY_PROCESS][inventory.item_id]["TYPE"] == "Material":
+                    if inventory.on_hand_inventory + inventory.in_transition_inventory <= self.policy:
+                        I[ASSEMBLY_PROCESS][inventory.item_id]["LOT_SIZE_ORDER"] = I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"]*self.Maximum_daily_consumption[ASSEMBLY_PROCESS][I[ASSEMBLY_PROCESS][inventory.item_id]["NAME"]]
+                    else:
+                        I[ASSEMBLY_PROCESS][inventory.item_id]["LOT_SIZE_ORDER"] = 0
+            
+            order_size = I[ASSEMBLY_PROCESS][self.item_id]["LOT_SIZE_ORDER"] 
             # if order_size > 0 and inventory.on_hand_inventory < REORDER_LEVEL:
             if order_size > 0:
                 daily_events.append(
-                    f"{present_daytime(self.env.now)}: The Procurement ordered {I[self.assembly_process][self.item_id]['NAME']}: {I[self.assembly_process][self.item_id]['LOT_SIZE_ORDER']}  units  ")
+                    f"{present_daytime(self.env.now)}: The Procurement ordered {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}: {I[ASSEMBLY_PROCESS][self.item_id]['LOT_SIZE_ORDER']}  units  ")
                 self.order_qty = order_size
                 # Update in-transition inventory
                 inventory.update_inven_level(
@@ -164,16 +199,20 @@ class Procurement:
                 # Calculate and log order cost
                 Cost.cal_cost(self, "Order cost")
                 # Initiate the delivery process by calling deliver_to_manufacturer method of the supplier
-                self.env.process(supplier.deliver_to_manufacturer(
-                    self, order_size, inventory, daily_events, lead_time_dict))
-                # Record in_transition_inventory
-                daily_events.append(
-                    f"{present_daytime(self.env.now)}: {I[self.assembly_process][self.item_id]['NAME']}\'s In_transition_inventory                    : {inventory.in_transition_inventory} units ")
-                # Record inventory
-                daily_events.append(
-                    f"{present_daytime(self.env.now)}: {I[self.assembly_process][self.item_id]['NAME']}\'s Total_Inventory                            : {inventory.in_transition_inventory+inventory.on_hand_inventory} units  ")
+                if SSPOLICY:
+                    self.env.process(supplier.deliver_to_manufacturer(
+                        self, order_size, inventory, daily_events, self.lead_time_dict))
+                else:
+                    self.env.process(supplier.deliver_to_manufacturer(
+                        self, order_size, inventory, daily_events, lead_time_dict))
+            # Record in_transition_inventory
+            daily_events.append(
+                f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s In_transition_inventory                    : {inventory.in_transition_inventory} units ")
+            # Record inventory
+            daily_events.append(
+                f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s Total_Inventory                            : {inventory.in_transition_inventory+inventory.on_hand_inventory} units  ")
             # Wait for the next order cycle
-            yield self.env.timeout(I[self.assembly_process][self.item_id]["MANU_ORDER_CYCLE"] * 24)
+            yield self.env.timeout(I[ASSEMBLY_PROCESS][self.item_id]["MANU_ORDER_CYCLE"] * 24)
             # record order history
 
 
@@ -192,7 +231,11 @@ class Production:
         self.unit_processing_cost = processing_cost
         self.print_stop = True
         self.print_limit = True
-        
+        '''
+        # for validation
+        print(f"production_rate: {production_rate}")
+        print(f"processing_cost of {P[ASSEMBLY_PROCESS][self.process_id]['PROCESS_COST']}:", processing_cost)
+        '''
 
     def process_items(self, daily_events):
         """
@@ -259,8 +302,13 @@ class Production:
 
 
 class Sales:
-    def __init__(self, env, item_id, delivery_cost, setup_cost, shortage, due_date , assembly_process):
+    def __init__(self, env, item_id, delivery_cost, setup_cost, shortage, due_date ):
         # Initialize sales process
+        '''
+        #for validation AP
+        print("Product_cost")
+        print(f"delivery_cost: {delivery_cost}\nsetup_cost: {setup_cost}\nshortagecost: {shortage}")
+        '''
         self.env = env
         self.item_id = item_id
         self.due_date = due_date
@@ -269,13 +317,12 @@ class Sales:
         self.unit_shortage_cost = shortage
         self.delivery_item = 0
         self.num_shortages = 0
-        self.assembly_process = assembly_process
 
     def _deliver_to_cust(self, demand_size, product_inventory, daily_events):
         """
         Deliver products to customers and handle shortages if any.
         """
-        yield self.env.timeout(I[self.assembly_process][self.item_id]["DUE_DATE"] * 24-TIME_CORRECTION/2)  # Time Correction
+        yield self.env.timeout(I[ASSEMBLY_PROCESS][self.item_id]["DUE_DATE"] * 24-TIME_CORRECTION/2)  # Time Correction
         product_inventory.holding_cost_last_updated -= TIME_CORRECTION / \
             2  # Cost Update Time Correction
         # Check if products are available for delivery
@@ -322,13 +369,12 @@ class Sales:
 
 
 class Customer:
-    def __init__(self, env, name, item_id, assembly_process="AP1"):
+    def __init__(self, env, name, item_id):
         # Initialize customer object
         self.env = env
         self.name = name
         self.item_id = item_id
-        self.assembly_process = assembly_process
-
+        self.scenario = None
     def order_product(self, sales, product_inventory, daily_events, scenario):
         """
         Place orders for products to the sales process.
@@ -336,12 +382,16 @@ class Customer:
         yield self.env.timeout(self.env.now)  # Wait for the next order cycle
         while True:
             # Generate a random demand quantity
-            I[self.assembly_process][0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(scenario)
-            demand_qty = I[self.assembly_process][0]["DEMAND_QUANTITY"]
+            if SSPOLICY:
+                pass
+            else:
+                self.scenario = scenario
+            I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(self.scenario)
+            demand_qty = I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"]
             # Receive demands and initiate delivery process
             sales.receive_demands(demand_qty, product_inventory, daily_events)
             # Wait for the next order cycle
-            yield self.env.timeout(I[self.assembly_process][0]["CUST_ORDER_CYCLE"] * 24)
+            yield self.env.timeout(I[ASSEMBLY_PROCESS][0]["CUST_ORDER_CYCLE"] * 24)
 
 
 class Cost:
@@ -397,55 +447,69 @@ class Cost:
             DAILY_COST_REPORT[key] = 0
 
 
-def create_env(I, P, daily_events, assembly_process):
+def create_env(I, P, daily_events):
     # Function to create the simulation environment and necessary objects
     simpy_env = simpy.Environment()  # Create a SimPy environment
 
     # Create an inventory for each item
     inventoryList = []
     
-    for i in I[assembly_process].keys():
+    for i in I[ASSEMBLY_PROCESS].keys():
         inventoryList.append(
-            Inventory(simpy_env, i, I[assembly_process][i]["HOLD_COST"], assembly_process))
+            Inventory(simpy_env, i, I[ASSEMBLY_PROCESS][i]["HOLD_COST"]))
 
     # Create stakeholders (Customer, Suppliers)
-    customer = Customer(simpy_env, "CUSTOMER", I[assembly_process][0]["ID"])
+    customer = Customer(simpy_env, "CUSTOMER", I[ASSEMBLY_PROCESS][0]["ID"])
 
     supplierList = []
     procurementList = []
-    for i in I[assembly_process].keys():
-        if I[assembly_process][i]["TYPE"] == 'Material':
-            supplierList.append(Supplier(simpy_env, "SUPPLIER_" + str(i), i, assembly_process))
+    for i in I[ASSEMBLY_PROCESS].keys():
+        if I[ASSEMBLY_PROCESS][i]["TYPE"] == 'Material':
+            supplierList.append(Supplier(simpy_env, "SUPPLIER_" + str(i), i))
             procurementList.append(Procurement(
-                simpy_env, I[assembly_process][i]["ID"], I[assembly_process][i]["PURCHASE_COST"], I[assembly_process][i]["ORDER_COST_TO_SUP"], assembly_process))
+                simpy_env, I[ASSEMBLY_PROCESS][i]["ID"], I[ASSEMBLY_PROCESS][i]["PURCHASE_COST"], I[ASSEMBLY_PROCESS][i]["ORDER_COST_TO_SUP"]))
 
     # Create managers for manufacturing process, procurement process, and delivery process
     sales = Sales(simpy_env, customer.item_id,
-                  I[assembly_process][0]["DELIVERY_COST"], I[assembly_process][0]["SETUP_COST_PRO"], I[assembly_process][0]["SHORTAGE_COST_PRO"], I[assembly_process][0]["DUE_DATE"], assembly_process)
+                  I[ASSEMBLY_PROCESS][0]["DELIVERY_COST"], I[ASSEMBLY_PROCESS][0]["SETUP_COST_PRO"], I[ASSEMBLY_PROCESS][0]["SHORTAGE_COST_PRO"], I[ASSEMBLY_PROCESS][0]["DUE_DATE"])
     productionList = []
-    for i in P[assembly_process].keys():
-        output_inventory = inventoryList[P[assembly_process][i]["OUTPUT"]["ID"]]
+    for i in P[ASSEMBLY_PROCESS].keys():
+        output_inventory = inventoryList[P[ASSEMBLY_PROCESS][i]["OUTPUT"]["ID"]]
         input_inventories = []
-        for j in P[assembly_process][i]["INPUT_TYPE_LIST"]:
+        for j in P[ASSEMBLY_PROCESS][i]["INPUT_TYPE_LIST"]:
             input_inventories.append(inventoryList[j["ID"]])
-        productionList.append(Production(simpy_env, "PROCESS_" + str(i), P[assembly_process][i]["ID"],
-                                         P[assembly_process][i]["PRODUCTION_RATE"], P[assembly_process][i]["OUTPUT"], input_inventories, P[assembly_process][i]["QNTY_FOR_INPUT_ITEM"], output_inventory, P[assembly_process][i]["PROCESS_COST"], P[assembly_process][i]["PROCESS_STOP_COST"]))
+        productionList.append(Production(simpy_env, "PROCESS_" + str(i), P[ASSEMBLY_PROCESS][i]["ID"],
+                                         P[ASSEMBLY_PROCESS][i]["PRODUCTION_RATE"], P[ASSEMBLY_PROCESS][i]["OUTPUT"], input_inventories, P[ASSEMBLY_PROCESS][i]["QNTY_FOR_INPUT_ITEM"], output_inventory, P[ASSEMBLY_PROCESS][i]["PROCESS_COST"], P[ASSEMBLY_PROCESS][i]["PROCESS_STOP_COST"]))
 
     return simpy_env, inventoryList, procurementList, productionList, sales, customer, supplierList, daily_events
 
 
 # Event processes for SimPy simulation
-def simpy_event_processes(simpy_env, inventoryList, procurementList, productionList, sales, customer, supplierList, daily_events, I, scenario, assembly_process):
+def simpy_event_processes(simpy_env, inventoryList, procurementList, productionList, sales, customer, supplierList, daily_events, I, scenario):
+    '''
+    #for Validation AP
+    print("="*30)
+    print("Print I")
+    print(I[ASSEMBLY_PROCESS])
+    print("="*30)
+    print("Print P")
+    print(P[ASSEMBLY_PROCESS])
+    '''
+    '''
+    # for validation scenario
+    print(scenario)
+    '''
+    simpy_env.process(customer.order_product(
+        sales, inventoryList[I[ASSEMBLY_PROCESS][0]["ID"]], daily_events, scenario["DEMAND"]))
     for production in productionList:
         simpy_env.process(production.process_items(daily_events))
     for i in range(len(supplierList)):
         simpy_env.process(procurementList[i].order_material(
             supplierList[i], inventoryList[supplierList[i].item_id], daily_events, scenario["LEADTIME"]))
-    simpy_env.process(customer.order_product(
-        sales, inventoryList[I[assembly_process][0]["ID"]], daily_events, scenario["DEMAND"]))
+    
 
 
-def update_daily_report(inventoryList, assembly_process):
+def update_daily_report(inventoryList):
     # Update daily reports for inventory
     day_list = []
     day_dict = {}
@@ -453,19 +517,19 @@ def update_daily_report(inventoryList, assembly_process):
         inven.daily_inven_report[-1] = inven.on_hand_inventory
         day_list = day_list+(inven.daily_inven_report)
 
-        day_dict[f"On_Hand_{I[assembly_process][inven.item_id]['NAME']}"] = inven.on_hand_inventory
+        day_dict[f"On_Hand_{I[ASSEMBLY_PROCESS][inven.item_id]['NAME']}"] = inven.on_hand_inventory
         # daily_inven_report[4]: Income, inven.daily_inven_report[5]: Outgoing
-        day_dict[f"Daily_Change_{I[assembly_process][inven.item_id]['NAME']}"] = inven.daily_inven_report[4] - \
+        day_dict[f"Daily_Change_{I[ASSEMBLY_PROCESS][inven.item_id]['NAME']}"] = inven.daily_inven_report[4] - \
             inven.daily_inven_report[5]
         if INTRANSIT == 1:
-            if I[assembly_process][inven.item_id]["TYPE"] == "Material":
+            if I[ASSEMBLY_PROCESS][inven.item_id]["TYPE"] == "Material":
                 # inven.daily_inven_report[6]: In_Transit
-                day_dict[f"In_Transit_{I[assembly_process][inven.item_id]['NAME']}"] = inven.daily_inven_report[6]
+                day_dict[f"In_Transit_{I[ASSEMBLY_PROCESS][inven.item_id]['NAME']}"] = inven.daily_inven_report[6]
     DAILY_REPORTS.append(day_list)
     STATE_DICT.append(day_dict)
     # Reset report
     for inven in inventoryList:
-        inven.daily_inven_report = [f"Day {inven.env.now//24+1}", I[assembly_process][inven.item_id]['NAME'], I[assembly_process][inven.item_id]['TYPE'],
+        inven.daily_inven_report = [f"Day {inven.env.now//24+1}", I[ASSEMBLY_PROCESS][inven.item_id]['NAME'], I[ASSEMBLY_PROCESS][inven.item_id]['TYPE'],
                                     inven.on_hand_inventory, 0, 0, inven.in_transition_inventory, 0]  # inventory report
 
 
@@ -483,7 +547,8 @@ def update_daily_report(inventoryList):
     for inven in inventoryList:
             if PRINT_SIM_REPORT:
                 print(inven.daily_inven_report)
-            inven.daily_inven_report = [f"Day {inven.env.now//24}", I[self.assembly_process][inven.item_id]['NAME'], I[assembly_process][inven.item_id]['TYPE'],
+            inven.daily_inven_report = [f"Day {inven.env.now//24}", I[ASSEMBLY_PROCESS][inven.item_id]['NAME'], I[ASSEMBLY_PROCESS
+][inven.item_id]['TYPE'],
                                         inven.on_hand_inventory, 0, 0, 0]  # inventory report
 '''
 

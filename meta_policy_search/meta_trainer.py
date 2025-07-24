@@ -4,7 +4,8 @@ import time
 from meta_policy_search.utils import logger
 from tensorboardX import SummaryWriter
 from tensorflow.python.client import device_lib
-
+import pandas as pd
+import os
 tf.config.set_visible_devices([], "GPU")
 tf.compat.v1.disable_eager_execution()# Api for using tf1 at tf2
 class Trainer(object):
@@ -63,6 +64,7 @@ class Trainer(object):
         self.sess = sess
         self.reward = None
         self.writer = SummaryWriter(log_dir=tensor_log)
+        self.data = None # for validation
     def train(self):
         saver = tf.compat.v1.train.Saver()
         """
@@ -102,7 +104,7 @@ class Trainer(object):
 
                     logger.log("Obtaining samples...")
                     time_env_sampling_start = time.time()
-                    paths = self.sampler.obtain_samples(log=True, log_prefix='Step_%d-' % step)
+                    paths= self.sampler.obtain_samples(log=True, log_prefix='Step_%d-' % step)
                     list_sampling_time.append(time.time() - time_env_sampling_start)
                     all_paths.append(paths)
 
@@ -122,9 +124,11 @@ class Trainer(object):
                         self.algo._adapt(samples_data)
 
                     if step == self.num_inner_grad_steps:
-                        reward = self.env.log_diagnostics(sum(list(paths.values()), []))
+                        reward, cost_dict, self.data = self.env.log_diagnostics(sum(list(paths.values()), []), itr, self.n_itr)
                         self.reward = reward
+
                         self.writer.add_scalar("Reward", reward, global_step=itr)
+                        self.writer.add_scalars("Costs",cost_dict, global_step=itr)
                     # train_writer = tf.summary.FileWriter('/home/ignasi/Desktop/meta_policy_search_graph',
                     #                                      sess.graph)
                     list_inner_step_time.append(time.time() - time_inner_step_start)
@@ -161,6 +165,10 @@ class Trainer(object):
         logger.log("Training finished")
 
         saver.save(sess, f"{self.save_folder}/model")
+        current_dir = os.path.dirname(__file__)
+        parent_dir = os.path.dirname(current_dir)
+        df = pd.DataFrame(self.data) 
+        df.to_csv(f"{os.path.join(parent_dir, 'test_data')}.csv")
         self.sess.close()        
 
     def get_itr_snapshot(self, itr):

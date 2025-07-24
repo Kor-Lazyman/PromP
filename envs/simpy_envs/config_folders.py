@@ -34,4 +34,5 @@ if "MainProcess" == current_process().name:
     SAVED_MODEL_PATH = save_path(os.path.join(parent_dir, "Saved_Model"))
     SAVE_MODEL = True
     HYPERPARAMETER_LOG = save_path(os.path.join(parent_dir, "Optuna_result"))
-
+    CSV_LOG = save_path(os.path.join(
+            parent_dir, "SSPOLICY_RESULT"))

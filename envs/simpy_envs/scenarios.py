@@ -21,7 +21,7 @@ def create_scenarios():
     # DEMAND
     demand_uniform_range = [
         (i, j)
-        for i in range(10, 14)  # Range for demand min values
+        for i in range(9, 14)  # Range for demand min values
         for j in range(i, 14)  # Range for demand max values
         if i <= j
     ]
@@ -35,8 +35,8 @@ def create_scenarios():
     # LEADTIME
     leadtime_uniform_range = [
         (i, j)
-        for i in range(1, 4)  # Range for lead time min values
-        for j in range(i, 4)  # Range for lead time max values
+        for i in range(1, 5)  # Range for lead time min values
+        for j in range(i, 5)  # Range for lead time max values
         if i <= j
     ]
     

@@ -51,10 +51,10 @@ I = {
         1: {
             "ID": 1,
             "TYPE": "Material",
-            "NAME": "MATERIAL 1",
+            "NAME": "MAT 1",
             "MANU_ORDER_CYCLE": 1,
             "INIT_LEVEL": 2,
-            "SUP_LEAD_TIME": 2,
+            "SUP_LEAD_TIME": 1,
             "HOLD_COST": 1,
             "PURCHASE_COST": 2,
             "ORDER_COST_TO_SUP": 1,
@@ -318,11 +318,12 @@ INVEN_LEVEL_MIN = 0
 INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
 
 # Simulation
-SIM_TIME = 200  # Default: 200 [days] per episode
+SIM_TIME = 200 # Default: 200 [days] per episode
 
 # Print logs
 PRINT_SIM = False
 ASSEMBLY_PROCESS = "AP3"
+SSPOLICY = True
 # PRINT_LOG_TIMESTEP = True
 # PRINT_LOG_DAILY_REPORT = True
 
