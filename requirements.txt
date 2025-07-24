@@ -6,7 +6,7 @@ pip install Pillow==8.4.0
 pip install PyPrind==2.11.3
 pip install moviepy==1.0.3
 pip install click==8.0.4
-pip install tensorflow==1.4.0
+pip install tensorflow==2.6.0
 pip install cloudpickle==2.2.1
 pip install matplotlib==3.3.4
 pip install simpy==3.0.13
