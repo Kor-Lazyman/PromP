@@ -102,7 +102,6 @@ class Supplier:
         self.item_id = item_id
 
     def deliver_to_manufacturer(self, procurement, material_qty, material_inventory, daily_events, lead_time_dict):
-
         """
         Deliver materials to the manufacturer after a certain lead time.
         """
@@ -131,9 +130,8 @@ class Procurement:
         '''
         self.unit_setup_cost = setup_cost
         self.order_qty = 0  # Initialize order quantity
-        # for SSpolicy
+        # for Experiment
         self.policy = None
-        self.lead_time_dict = None
         self.Maximum_daily_consumption ={
             "AP1":{
                 "MAT 1": 2
@@ -171,7 +169,6 @@ class Procurement:
         """
         Place orders for materials to the supplier.
         """
-        
         yield self.env.timeout(self.env.now)  # Wait for the next order cycle
         while True:
             daily_events.append(
@@ -180,13 +177,18 @@ class Procurement:
             # Set the order size based on LOT_SIZE_ORDER and reorder level
             # order_size = ORDER_QTY[self.item_id-1]
             #order_size = 2
+            '''
+            SSPOLICY 추가 코드
+            '''
             if SSPOLICY:
                 if I[ASSEMBLY_PROCESS][inventory.item_id]["TYPE"] == "Material":
                     if inventory.on_hand_inventory + inventory.in_transition_inventory <= self.policy:
                         I[ASSEMBLY_PROCESS][inventory.item_id]["LOT_SIZE_ORDER"] = I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"]*self.Maximum_daily_consumption[ASSEMBLY_PROCESS][I[ASSEMBLY_PROCESS][inventory.item_id]["NAME"]]
                     else:
                         I[ASSEMBLY_PROCESS][inventory.item_id]["LOT_SIZE_ORDER"] = 0
-            
+            '''
+            기존 코드
+            '''
             order_size = I[ASSEMBLY_PROCESS][self.item_id]["LOT_SIZE_ORDER"] 
             # if order_size > 0 and inventory.on_hand_inventory < REORDER_LEVEL:
             if order_size > 0:
@@ -199,18 +201,14 @@ class Procurement:
                 # Calculate and log order cost
                 Cost.cal_cost(self, "Order cost")
                 # Initiate the delivery process by calling deliver_to_manufacturer method of the supplier
-                if SSPOLICY:
-                    self.env.process(supplier.deliver_to_manufacturer(
-                        self, order_size, inventory, daily_events, self.lead_time_dict))
-                else:
-                    self.env.process(supplier.deliver_to_manufacturer(
-                        self, order_size, inventory, daily_events, lead_time_dict))
-            # Record in_transition_inventory
-            daily_events.append(
-                f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s In_transition_inventory                    : {inventory.in_transition_inventory} units ")
-            # Record inventory
-            daily_events.append(
-                f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s Total_Inventory                            : {inventory.in_transition_inventory+inventory.on_hand_inventory} units  ")
+                self.env.process(supplier.deliver_to_manufacturer(
+                    self, order_size, inventory, daily_events, lead_time_dict))
+                # Record in_transition_inventory
+                daily_events.append(
+                    f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s In_transition_inventory                    : {inventory.in_transition_inventory} units ")
+                # Record inventory
+                daily_events.append(
+                    f"{present_daytime(self.env.now)}: {I[ASSEMBLY_PROCESS][self.item_id]['NAME']}\'s Total_Inventory                            : {inventory.in_transition_inventory+inventory.on_hand_inventory} units  ")
             # Wait for the next order cycle
             yield self.env.timeout(I[ASSEMBLY_PROCESS][self.item_id]["MANU_ORDER_CYCLE"] * 24)
             # record order history
@@ -374,7 +372,7 @@ class Customer:
         self.env = env
         self.name = name
         self.item_id = item_id
-        self.scenario = None
+
     def order_product(self, sales, product_inventory, daily_events, scenario):
         """
         Place orders for products to the sales process.
@@ -382,11 +380,7 @@ class Customer:
         yield self.env.timeout(self.env.now)  # Wait for the next order cycle
         while True:
             # Generate a random demand quantity
-            if SSPOLICY:
-                pass
-            else:
-                self.scenario = scenario
-            I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(self.scenario)
+            I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"] = DEMAND_QTY_FUNC(scenario)
             demand_qty = I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"]
             # Receive demands and initiate delivery process
             sales.receive_demands(demand_qty, product_inventory, daily_events)
@@ -529,7 +523,9 @@ def update_daily_report(inventoryList):
     STATE_DICT.append(day_dict)
     # Reset report
     for inven in inventoryList:
-        inven.daily_inven_report = [f"Day {inven.env.now//24+1}", I[ASSEMBLY_PROCESS][inven.item_id]['NAME'], I[ASSEMBLY_PROCESS][inven.item_id]['TYPE'],
+        inven.daily_inven_report = [f"Day {inven.env.now//24+1}", I[ASSEMBLY_PROCESS
+][inven.item_id]['NAME'], I[ASSEMBLY_PROCESS
+][inven.item_id]['TYPE'],
                                     inven.on_hand_inventory, 0, 0, inven.in_transition_inventory, 0]  # inventory report
 
 
