@@ -207,6 +207,170 @@ I = {
             "INIT_LEVEL": 1,
             "HOLD_COST": 1
         }
+    },
+    "AP4": {
+        0: {
+            "ID": 0,
+            "TYPE": "Product",
+            "NAME": "PROD",
+            "CUST_ORDER_CYCLE": 7,
+            "INIT_LEVEL": 0,
+            "DEMAND_QUANTITY": 0,
+            "HOLD_COST": 1,
+            "SETUP_COST_PRO": 1,
+            "DELIVERY_COST": 1,
+            "DUE_DATE": 7,
+            "SHORTAGE_COST_PRO": 50
+        },
+        1: {
+            "ID": 1,
+            "TYPE": "Material",
+            "NAME": "MAT 1",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        2: {
+            "ID": 2,
+            "TYPE": "Material",
+            "NAME": "MAT 2",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 4,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        3: {
+            "ID": 3,
+            "TYPE": "Material",
+            "NAME": "MAT 3",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        4: {
+            "ID": 4,
+            "TYPE": "Material",
+            "NAME": "MAT 4",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        5: {
+            "ID": 5,
+            "TYPE": "Material",
+            "NAME": "MAT 5",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        6: {
+            "ID": 6,
+            "TYPE": "Material",
+            "NAME": "MAT 6",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        7: {
+            "ID": 7,
+            "TYPE": "Material",
+            "NAME": "MAT 7",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        8: {
+            "ID": 8,
+            "TYPE": "Material",
+            "NAME": "MAT 8",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 4,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        9: {
+            "ID": 9,
+            "TYPE": "Material",
+            "NAME": "MAT 9",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        10: {
+            "ID": 10,
+            "TYPE": "Material",
+            "NAME": "MAT 10",
+            "MANU_ORDER_CYCLE": 1,
+            "INIT_LEVEL": 2,
+            "SUP_LEAD_TIME": 2,
+            "HOLD_COST": 1,
+            "PURCHASE_COST": 2,
+            "ORDER_COST_TO_SUP": 1,
+            "LOT_SIZE_ORDER": 0
+        },
+        11: {
+            "ID": 11,
+            "TYPE": "WIP",
+            "NAME": "WIP 1",
+            "INIT_LEVEL": 1,
+            "HOLD_COST": 1
+        },
+        12: {
+            "ID": 12,
+            "TYPE": "WIP",
+            "NAME": "WIP 2",
+            "INIT_LEVEL": 1,
+            "HOLD_COST": 1
+        }
+        ,
+        13: {
+            "ID": 13,
+            "TYPE": "WIP",
+            "NAME": "WIP 3",
+            "INIT_LEVEL": 1,
+            "HOLD_COST": 1
+        },
+        14: {
+            "ID": 14,
+            "TYPE": "WIP",
+            "NAME": "WIP 4",
+            "INIT_LEVEL": 1,
+            "HOLD_COST": 1
+        }
     }
 }
 
@@ -270,6 +434,53 @@ P = {
             "PROCESS_COST": 1,
             "PROCESS_STOP_COST": 2
         }
+    },
+     "AP4": {
+        0: {
+            "ID": 0,
+            "PRODUCTION_RATE": 12,
+            "INPUT_TYPE_LIST": [I["AP4"][1], I["AP4"][2]],
+            "QNTY_FOR_INPUT_ITEM": [1, 1],
+            "OUTPUT": I["AP4"][11],
+            "PROCESS_COST": 1,
+            "PROCESS_STOP_COST": 2
+        },
+        1: {
+            "ID": 1,
+            "PRODUCTION_RATE": 12,
+            "INPUT_TYPE_LIST": [I["AP4"][2], I["AP4"][3], I["AP4"][11]],
+            "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
+            "OUTPUT": I["AP4"][12],
+            "PROCESS_COST": 1,
+            "PROCESS_STOP_COST": 2
+        },
+        2: {
+            "ID": 2,
+            "PRODUCTION_RATE": 12,
+            "INPUT_TYPE_LIST": [I["AP4"][4], I["AP4"][5], I["AP4"][12]],
+            "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
+            "OUTPUT": I["AP4"][13],
+            "PROCESS_COST": 1,
+            "PROCESS_STOP_COST": 2
+        },
+        3: {
+            "ID": 3,
+            "PRODUCTION_RATE": 12,
+            "INPUT_TYPE_LIST": [I["AP4"][6], I["AP4"][7], I["AP4"][8], I["AP4"][13]],
+            "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
+            "OUTPUT": I["AP4"][14],
+            "PROCESS_COST": 1,
+            "PROCESS_STOP_COST": 2
+        },
+        4: {
+            "ID": 4,
+            "PRODUCTION_RATE": 12,
+            "INPUT_TYPE_LIST": [I["AP4"][8], I["AP4"][9], I["AP4"][10], I["AP4"][14]],
+            "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
+            "OUTPUT": I["AP4"][0],
+            "PROCESS_COST": 1,
+            "PROCESS_STOP_COST": 2
+        }
     }
 }
 
@@ -315,17 +526,25 @@ def SUP_LEAD_TIME_FUNC(lead_time_dict):
 # State space
 # if this is not 0, the length of state space of demand quantity is not identical to INVEN_LEVEL_MAX
 INVEN_LEVEL_MIN = 0
-INVEN_LEVEL_MAX = 20  # Capacity limit of the inventory [units]
+INVEN_LEVEL_MAX = 50  # Capacity limit of the inventory [units]
 
 # Simulation
 SIM_TIME = 200 # Default: 200 [days] per episode
 
 # Print logs
 PRINT_SIM = False
-ASSEMBLY_PROCESS = "AP3"
+ASSEMBLY_PROCESS = "AP4"
 SSPOLICY = True
-STATIONARY = False
-NUM_OF_TEST = 20
+STATIONARY = True
+NUM_OF_TEST = 10
+if ASSEMBLY_PROCESS == "AP1":
+    MAT_COUNT = 1
+elif ASSEMBLY_PROCESS == "AP2":
+    MAT_COUNT = 3
+elif ASSEMBLY_PROCESS == "AP3":
+    MAT_COUNT = 5
+elif ASSEMBLY_PROCESS == "AP4":
+    MAT_COUNT = 10
 # PRINT_LOG_TIMESTEP = True
 # PRINT_LOG_DAILY_REPORT = True
 

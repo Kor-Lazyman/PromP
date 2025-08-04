@@ -47,7 +47,6 @@ def create_scenarios():
     ]
 
     # Create all combinations of demand and leadtime
-    scenarios = list(itertools.product(demand_uniform, leadtime_uniform))
-    scenarios = [{"DEMAND": demand, "LEADTIME": leadtime} for demand, leadtime in scenarios]
+    scenarios = [{"DEMAND": demand, "LEADTIME": [random.sample(leadtime_uniform, 1)[0] for _ in range(MAT_COUNT)]} for demand in demand_uniform]
 
     return scenarios

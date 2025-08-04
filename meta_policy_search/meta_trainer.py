@@ -124,7 +124,7 @@ class Trainer(object):
                         self.algo._adapt(samples_data)
 
                     if step == self.num_inner_grad_steps:
-                        reward, cost_dict, self.data = self.env.log_diagnostics(sum(list(paths.values()), []), itr, self.n_itr)
+                        reward, cost_dict, _ = self.env.log_diagnostics(sum(list(paths.values()), []), itr, self.n_itr)
                         self.reward = reward
 
                         self.writer.add_scalar("Reward", reward, global_step=itr)
@@ -165,10 +165,10 @@ class Trainer(object):
         logger.log("Training finished")
 
         saver.save(sess, f"{self.save_folder}/model")
-        current_dir = os.path.dirname(__file__)
-        parent_dir = os.path.dirname(current_dir)
-        df = pd.DataFrame(self.data) 
-        df.to_csv(f"{os.path.join(parent_dir, 'test_data')}.csv")
+        #current_dir = os.path.dirname(__file__)
+        #parent_dir = os.path.dirname(current_dir)
+        #df = pd.DataFrame(self.data) 
+        #df.to_csv(f"{os.path.join(parent_dir, 'test_data')}.csv")
         self.sess.close()        
 
     def get_itr_snapshot(self, itr):

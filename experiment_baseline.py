@@ -1,6 +1,6 @@
 from envs.simpy_envs.config_SimPy import *
 from envs.simpy_envs.log_SimPy import *
-import envs.simpy_envs.environment_nonstationary as env
+import envs.simpy_envs.environment as env
 from envs.simpy_envs.config_RL import *
 from envs.simpy_envs.config_folders import * 
 from envs.simpy_envs.scenarios import * 
@@ -52,6 +52,18 @@ Maximum_daily_consumption ={
         "MAT 3": 2,
         "MAT 4": 2,
         "MAT 5": 2
+    },
+    "AP4": {
+        "MAT 1": 2,
+        "MAT 2": 4,
+        "MAT 3": 2,
+        "MAT 4": 2,
+        "MAT 5": 2,
+         "MAT 6": 2,
+        "MAT 7": 2,
+        "MAT 8": 4,
+        "MAT 9": 2,
+        "MAT 10": 2
     }
 }
 # Start timing the computation
@@ -157,12 +169,12 @@ def main():
     for x in range(3):
         test_result["Variance"][x] = statistics.stdev(mean_data[x])
     
-    
+    '''
     meta_results = model.run_simpy(scenarios)
     for meta_result in meta_results:
         for key in test_result.keys():
             test_result[key].append(meta_result[key])
-    
+    '''
     df = pd.DataFrame(test_result)
     print(CSV_LOG)
     df.to_csv(os.path.join(CSV_LOG, "Test_Result.csv"))

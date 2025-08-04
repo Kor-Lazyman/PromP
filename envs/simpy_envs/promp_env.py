@@ -6,7 +6,10 @@ from gym import spaces
 import numpy as np
 from envs.simpy_envs.config_RL import * 
 # import envs.simpy_envs.environment as env # for Meta-learning
-import envs.simpy_envs.environment_nonstationary as env #for baseline_test
+if STATIONARY:
+    import envs.simpy_envs.environment as env #for baseline_test
+else:
+    import envs.simpy_envs.environment_nonstationary as env
 from envs.simpy_envs.log_SimPy import *
 from envs.simpy_envs.log_RL import *
 import matplotlib.pyplot as plt
@@ -20,16 +23,9 @@ class MetaEnv(Env):
     """
     def __init__(self):
         self.actions = []
-        self.all_tasks = create_scenarios()
-        self.mat_count = None
 
-        if ASSEMBLY_PROCESS == "AP1":
-            self.mat_count = 1
-        elif ASSEMBLY_PROCESS == "AP2":
-            self.mat_count = 3
-        elif ASSEMBLY_PROCESS == "AP3":
-            self.mat_count = 5
-       
+        
+        self.all_tasks = create_scenarios()
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
         super(MetaEnv, self).__init__()
 
@@ -49,12 +45,12 @@ class MetaEnv(Env):
         
         os = []
         # Define action space
-        self.action_space = spaces.Box(low = 0, high = len(ACTION_SPACE), shape = (self.mat_count, 1), dtype = int)
+        self.action_space = spaces.Box(low = 0, high = len(ACTION_SPACE), shape = (MAT_COUNT, 1), dtype = int)
         # if self.scenario["Dist_Type"] == "UNIFORM":
         #    k = INVEN_LEVEL_MAX*2+(self.scenario["max"]+1)
 
         # DAILY_CHANGE + INTRANSIT + REMAINING_DEMAND
-        os = spaces.Box(low = 0, high = 41, shape=(len(I[ASSEMBLY_PROCESS])*(1+DAILY_CHANGE)+self.mat_count*INTRANSIT+1,1), dtype=int)
+        os = spaces.Box(low = 0, high = INVEN_LEVEL_MAX*2+1, shape=(len(I[ASSEMBLY_PROCESS])*(1+DAILY_CHANGE)+MAT_COUNT*INTRANSIT+1,1), dtype=int)
         
         '''
         - Inventory Level of Product
@@ -129,7 +125,7 @@ class MetaEnv(Env):
             for _ in range(len(I[ASSEMBLY_PROCESS])):
                 if I[ASSEMBLY_PROCESS][_]["TYPE"] == "Material":
                     # Set action as predicted value
-                    I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0),5) # 양수 상한
+                    I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0), ACTION_SPACE[-1]) # 양수 상한
                     i += 1
         elif RL_ALGORITHM == "DQN":
             pass
@@ -209,12 +205,12 @@ class MetaEnv(Env):
                         STATE_DICT[-1][f"In_Transit_{I[ASSEMBLY_PROCESS][id]['NAME']}"])
         '''
         # Append remaining demand
-        state.append(I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"] -
+        print(I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"] -
                      self.inventoryList[0].on_hand_inventory+INVEN_LEVEL_MAX)
         '''
         state.append(I[ASSEMBLY_PROCESS][0]["DEMAND_QUANTITY"] -
                      self.inventoryList[0].on_hand_inventory+INVEN_LEVEL_MAX)
-
+        
         return state
     def log_diagnostics(self, paths, now, goal):
         """
@@ -224,10 +220,13 @@ class MetaEnv(Env):
             paths (list) : list of all paths collected with this env during this iteration
             prefix (str) : prefix for logger
         """
+        print("="*20)
         rewards = 0
         for path in paths:
             rewards += sum(path['rewards'])
         average = rewards/len(paths)
+        print("Reward:", average)
+        print("="*20)
 
         '''
         if now+1 == goal:
@@ -249,7 +248,7 @@ class MetaEnv(Env):
         for key in self.cost_dict.keys():
             for path in paths:
                 cost_dict[key] = cost_dict[key] + path['env_infos'][key][-1]/len(paths)
-
+        '''
         action_datas = {
             "Mat1-I": [min(max(0,np.round(action[0])),5) for action in paths[0]['actions']],
             "Mat1-R":[action[0] for action in paths[0]['actions']],
@@ -262,8 +261,8 @@ class MetaEnv(Env):
             "Mat5-I": [min(max(0,np.round(action[4])),5) for action in paths[0]['actions']],
             "Mat5-R":[action[4] for action in paths[0]['actions']],
         }
-
-        return average, cost_dict, action_datas
+        '''
+        return average, cost_dict, None
        
  
     
