@@ -87,7 +87,7 @@ def reset_classes(config, model, tasks):
     return trainer
 def main(config):
     start = time.time()
-    num_scenarios = 
+    num_scenarios = 10
     tasks = []
     # task sampling
     if STATIONARY:
