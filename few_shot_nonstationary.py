@@ -16,7 +16,6 @@ import os
 import time
 import pandas as pd
 import statistics
-import umap
 import matplotlib.pyplot as plt
 import csv
 tf.compat.v1.disable_eager_execution()
@@ -88,22 +87,26 @@ def reset_classes(config, model, tasks):
     return trainer
 def main(config):
     start = time.time()
-    num_tasks = 1
-    
+    num_scenarios = 
+    tasks = []
     # task sampling
     if STATIONARY:
-        tasks = random.sample(create_scenarios(), num_tasks)
+        for x in range(num_scenarios):
+            sampled_scenario = random.sample(create_scenarios(), 1)[0]
+            tasks.append(sampled_scenario)
     else:
-        tasks = random.sample(create_scenarios(), num_tasks*3)
+        for x in range(num_scenarios*3):
+            sampled_scenario = random.sample(create_scenarios(), 1)[0]
+            tasks.append(sampled_scenario)
     
     # 각 task별 reward 수집
     rewards_by_task = {
         "VPG_MAML_Mean":[],
-        #"VPG_MAML_STD":[],
+        "VPG_MAML_STD":[],
         "ProMP_Mean":[],
-        #"ProMP_STD": [],
-        "Random_Mean": []
-        #"Random_STD": []
+        "ProMP_STD": [],
+        "Random_Mean": [],
+        "Random_STD": []
     }
     actions_by_shots_before = {
         "VPG_MAML":{},
@@ -143,16 +146,16 @@ def main(config):
         #tasks[1]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 8, "max": 11}
         #tasks[2]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 16, "max": 18}
         # 학습 진행
-        for id in range(1):
+        for scenario_id in range(num_scenarios):
             print("="*10,f"Task {task_num+1}/10 Started","="*10)
             # 클래스 초기화
             if STATIONARY:
-                trainer = reset_classes(config, model, [tasks[id]])
+                trainer = reset_classes(config, model, [tasks[scenario_id]])
             else:
-                trainer = reset_classes(config, model, tasks[3*id: 3*id+3])
+                trainer = reset_classes(config, model, tasks[3*scenario_id: 3*scenario_id+3])
             
-
-            reward, before, after = trainer.train(model_path)
+            # 학습 후 데이터 추출
+            reward_lst, before, after = trainer.train(model_path)
         #    print(after)
             for action in before:
                 for i in range(len(action)):
@@ -163,7 +166,8 @@ def main(config):
                 for i in range(len(action)):
                     action[i] = min(max(np.round(action[i]),0),10)
                     actions_by_shots_after[model][i].append(action[i])
-            reward_by_shots.append(reward)
+            # 리워드(10개의 shot에 대한 데이터)
+            reward_by_shots.append(reward_lst)
 
             trainer.env.reset()
                    
@@ -171,18 +175,18 @@ def main(config):
             tf.compat.v1.reset_default_graph()
             task_num += 1
         # 평균, 표준편차 계산
-        for i in range(len(reward_by_shots[0])):
+        for i in range(len(reward_by_shots[0])): # shot 수만큼
             temp_mean = []
             for j in range(len(reward_by_shots)):
-                temp_mean.append(reward_by_shots[j][i])
-            rewards_by_task[f"{model}_Mean"].append(sum(temp_mean)/num_tasks)
+                temp_mean.append(reward_by_shots[j][i])#i번 shot에 대한 리스트
+            rewards_by_task[f"{model}_Mean"].append(sum(temp_mean)/num_scenarios) #i번 shot에 대한 평균
             
             #rewards_by_task[f"{model}_STD"].append(statistics.stdev(temp_mean))
     # 데이터 export
     df = pd.DataFrame(rewards_by_task)
     df = df.T
     df.to_csv(os.path.join(CSV_LOG,"Result.csv"))
-
+    
     for model in model_type:
         temp_df = pd.DataFrame(actions_by_shots_after[model])
         temp_df.to_csv(os.path.join(CSV_LOG,f"{model}_after.csv"))
@@ -217,7 +221,7 @@ if __name__=="__main__":
 
         # ProMP config
         'inner_lr': 0.1, # adaptation step size
-        'n_itr': 50, # number of overall training iterations
+        'n_itr': 11, # number of overall training iterations
         'meta_batch_size': 1, # number of sampled meta-tasks per iterations
         'num_inner_grad_steps': 1, # number of inner / adaptation gradient steps
         'inner_type' : 'log_likelihood', # type of inner loss function used

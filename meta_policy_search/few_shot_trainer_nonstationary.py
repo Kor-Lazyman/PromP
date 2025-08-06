@@ -86,19 +86,17 @@ class Trainer(object):
                 paths= self.sampler_for_learning.obtain_samples(log=False, log_prefix='Step_%d-' % step)
                 samples_data = self.sample_processor.process_samples(paths, log='all', log_prefix='Step_%d-' % step)
                 reward, _, self.data = self.env.log_diagnostics(sum(list(paths.values()), []), 0, self.n_itr)
+                self.reward_by_shot.append(reward)
                 print("Reward:", reward)
                 
                 self.algo._adapt(samples_data)
 
-                paths_2= self.sampler_for_test.obtain_samples(log=False, log_prefix='Step_%d-' % step)
+                #paths_2= self.sampler_for_test.obtain_samples(log=False, log_prefix='Step_%d-' % step)
                 
-                reward, _, self.data = self.env.log_diagnostics(sum(list(paths_2.values()), []), 0, self.n_itr)
-                self.reward += reward
+                #reward, _, self.data = self.env.log_diagnostics(sum(list(paths_2.values()), []), 0, self.n_itr)
                 # Append shot_result
-                self.reward_by_shot.append(self.reward)
-                # reset
-                self.reward = 0
-        after = paths_2[0][0]['actions']
+                
+        after = paths[0][0]['actions']
         self.sess.close()      
         return self.reward_by_shot, before, after  
 
