@@ -35,9 +35,9 @@ if "MainProcess" == current_process().name:
         SAVED_MODEL_PATH = DEFINE_FOLDER(os.path.join(parent_dir, "Saved_Model"))
         SAVE_MODEL = True
         HYPERPARAMETER_LOG = DEFINE_FOLDER(os.path.join(parent_dir, "Optuna_result"))
-    
-        CSV_LOG = DEFINE_FOLDER(os.path.join(
-                parent_dir, "FEW_SHOT_RESULT"))
+        if FEWSHOT:
+            CSV_LOG = DEFINE_FOLDER(os.path.join(
+                    parent_dir, "FEW_SHOT_RESULT"))
     else:
         CSV_LOG = DEFINE_FOLDER(os.path.join(
                 parent_dir, "SSPOLICY_RESULT"))
