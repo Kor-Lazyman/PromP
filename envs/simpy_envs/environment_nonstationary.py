@@ -105,7 +105,7 @@ class Supplier:
         """
         Deliver materials to the manufacturer after a certain lead time.
         """
-        I[ASSEMBLY_PROCESS][self.item_id]["SUP_LEAD_TIME"] = SUP_LEAD_TIME_FUNC(lead_time_dict)
+        I[ASSEMBLY_PROCESS][self.item_id]["SUP_LEAD_TIME"] = SUP_LEAD_TIME_FUNC(lead_time_dict[self.item_id-1])
         lead_time = I[ASSEMBLY_PROCESS][self.item_id]["SUP_LEAD_TIME"]
         # Log the delivery event with lead time
         daily_events.append(

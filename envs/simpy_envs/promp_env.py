@@ -72,8 +72,9 @@ class MetaEnv(Env):
         Returns:
             tasks (list) : an (n_tasks) length list of tasks
         """
-        
+        print("all tasks reset")
         tasks = random.sample(self.all_tasks, n_tasks)
+        self.all_tasks = create_scenarios()
         return tasks
 
     def set_task(self, task):
@@ -120,13 +121,17 @@ class MetaEnv(Env):
     def step(self, action):
         self.actions.append(action)
         # Update the action of the agent
+        test_actions = []
+        # Update the action of the agent
         if RL_ALGORITHM == "PPO":
             i = 0
             for _ in range(len(I[ASSEMBLY_PROCESS])):
                 if I[ASSEMBLY_PROCESS][_]["TYPE"] == "Material":
                     # Set action as predicted value
-                    I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0), ACTION_SPACE[-1]) # 양수 상한
+                    I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0),10) # 양수 상한
                     i += 1
+                    test_actions.append(I[ASSEMBLY_PROCESS][_]['LOT_SIZE_ORDER'])
+        
         elif RL_ALGORITHM == "DQN":
             pass
 
@@ -143,8 +148,6 @@ class MetaEnv(Env):
         next_state = state_real
         # Calculate the total cost of the day
         cost = env.Cost.update_cost_log(self.inventoryList)
-        if PRINT_SIM:
-            cost = dict(DAILY_COST_REPORT)
         # Cost Dict update
         for key in DAILY_COST_REPORT.keys():
             self.cost_dict[key] += DAILY_COST_REPORT[key]
@@ -169,11 +172,9 @@ class MetaEnv(Env):
             for log in self.daily_events:
                 print(log)
             print("[Daily Total Cost] ", -reward)
-            for _ in cost.keys():
-                print(_, cost[_])
             print("Total cost: ", -self.total_reward)
             print("[REAL_STATE for the next round] ",  [
-                    item-INVEN_LEVEL_MAX for item in next_state])
+                    item for item in next_state])
 
         self.daily_events.clear()
 

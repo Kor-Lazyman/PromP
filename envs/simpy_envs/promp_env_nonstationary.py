@@ -22,14 +22,6 @@ class MetaEnv(Env):
         self.tasks = tasks
         self.actions = []
         self.all_tasks = create_scenarios()
-        self.mat_count = None
-
-        if ASSEMBLY_PROCESS == "AP1":
-            self.mat_count = 1
-        elif ASSEMBLY_PROCESS == "AP2":
-            self.mat_count = 3
-        elif ASSEMBLY_PROCESS == "AP3":
-            self.mat_count = 5
        
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
         super(MetaEnv, self).__init__()
@@ -50,12 +42,12 @@ class MetaEnv(Env):
         
         os = []
         # Define action space
-        self.action_space = spaces.Box(low = 0, high = len(ACTION_SPACE), shape = (self.mat_count, 1), dtype = int)
+        self.action_space = spaces.Box(low = 0, high = len(ACTION_SPACE), shape = (MAT_COUNT, 1), dtype = int)
         # if self.scenario["Dist_Type"] == "UNIFORM":
         #    k = INVEN_LEVEL_MAX*2+(self.scenario["max"]+1)
 
         # DAILY_CHANGE + INTRANSIT + REMAINING_DEMAND
-        os = spaces.Box(low = 0, high = 41, shape=(len(I[ASSEMBLY_PROCESS])*(1+DAILY_CHANGE)+self.mat_count*INTRANSIT+1,1), dtype=int)
+        os = spaces.Box(low = 0, high = 41, shape=(len(I[ASSEMBLY_PROCESS])*(1+DAILY_CHANGE)+MAT_COUNT*INTRANSIT+1,1), dtype=int)
         
         '''
         - Inventory Level of Product
@@ -77,7 +69,7 @@ class MetaEnv(Env):
         Returns:
             tasks (list) : an (n_tasks) length list of tasks
         """
-        
+        print("Check")
         tasks = random.sample(self.all_tasks, n_tasks)
         return tasks
 
@@ -89,7 +81,7 @@ class MetaEnv(Env):
         Args:
             task: task of the meta-learning environment
         """
-        self.scenario = task
+        self.scenario = self.tasks[0]
 
     def get_task(self):
         """
@@ -109,7 +101,7 @@ class MetaEnv(Env):
             'Order cost': 0,
             'Shortage cost': 0
         }
-        
+        self.scenario = self.tasks[0]
         # Initialize the simulation environment
         self.simpy_env, self.inventoryList, self.procurementList, self.productionList, self.sales, self.customer, self.providerList, self.daily_events = env.create_env(
             I, P, DAILY_EVENTS)
@@ -117,7 +109,7 @@ class MetaEnv(Env):
                                   self.productionList, self.sales, self.customer, self.providerList, self.daily_events, I, self.scenario)
         env.update_daily_report(self.inventoryList)
         #print("Former_Scenario:", self.scenario)
-        self.scenario = self.tasks[0]
+        
         self.setting_scenario()
         #print("After_Scenario:", self.scenario)
         state_real = self.get_current_state()
@@ -142,17 +134,17 @@ class MetaEnv(Env):
                 #print("After_Scenario:", self.scenario)
 
         self.actions.append(action)
+        test_actions = []
         # Update the action of the agent
         if RL_ALGORITHM == "PPO":
             i = 0
             for _ in range(len(I[ASSEMBLY_PROCESS])):
                 if I[ASSEMBLY_PROCESS][_]["TYPE"] == "Material":
                     # Set action as predicted value
-                    I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0),5) # 양수 상한
+                    I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0),10) # 양수 상한
                     i += 1
-        elif RL_ALGORITHM == "DQN":
-            pass
-
+                    test_actions.append(I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"])
+    
         # Capture the current state of the environment
         # current_state = env.cap_current_state(self.inventoryList)
         # Run the simulation for 24 hours (until the next day)

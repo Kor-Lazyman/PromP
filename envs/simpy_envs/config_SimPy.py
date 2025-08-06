@@ -220,7 +220,7 @@ I = {
             "SETUP_COST_PRO": 1,
             "DELIVERY_COST": 1,
             "DUE_DATE": 7,
-            "SHORTAGE_COST_PRO": 50
+            "SHORTAGE_COST_PRO": 200
         },
         1: {
             "ID": 1,
@@ -467,7 +467,7 @@ P = {
             "ID": 3,
             "PRODUCTION_RATE": 12,
             "INPUT_TYPE_LIST": [I["AP4"][6], I["AP4"][7], I["AP4"][8], I["AP4"][13]],
-            "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
+            "QNTY_FOR_INPUT_ITEM": [1, 1, 1, 1],
             "OUTPUT": I["AP4"][14],
             "PROCESS_COST": 1,
             "PROCESS_STOP_COST": 2
@@ -476,7 +476,7 @@ P = {
             "ID": 4,
             "PRODUCTION_RATE": 12,
             "INPUT_TYPE_LIST": [I["AP4"][8], I["AP4"][9], I["AP4"][10], I["AP4"][14]],
-            "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
+            "QNTY_FOR_INPUT_ITEM": [1, 1, 1, 1],
             "OUTPUT": I["AP4"][0],
             "PROCESS_COST": 1,
             "PROCESS_STOP_COST": 2
@@ -534,9 +534,9 @@ SIM_TIME = 200 # Default: 200 [days] per episode
 # Print logs
 PRINT_SIM = False
 ASSEMBLY_PROCESS = "AP4"
-SSPOLICY = True
-STATIONARY = True
-NUM_OF_TEST = 10
+SSPOLICY = False
+STATIONARY = False
+NUM_OF_TEST = 1
 if ASSEMBLY_PROCESS == "AP1":
     MAT_COUNT = 1
 elif ASSEMBLY_PROCESS == "AP2":

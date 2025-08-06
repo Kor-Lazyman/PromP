@@ -24,14 +24,15 @@ def setting_scenario(procurementList, customer, tasks):
 
 def run_simpy(tasks):
     meta_results = []
-    for meta_algo in ["promp", "maml"]:
-        meta_results.append(simul(tasks, meta_algo))
+    #for meta_algo in ["promp"]:
+    test_result, actions = simul(tasks, "promp")
+    meta_results.append(test_result)
         #tf.compat.v1.reset_default_graph()  # 그래프 리셋
-    return meta_results
+    return meta_results, actions
 
 def simul(tasks, meta_algo):
     tf.compat.v1.disable_eager_execution()
-
+    
     config = {
         'seed': 1,
         'baseline': 'LinearFeatureBaseline',
@@ -92,7 +93,8 @@ def simul(tasks, meta_algo):
 
         # Store results for calculating mean and variance later
         mean_data = []
-        for test_id in range(NUM_OF_TEST):
+        actions = []
+        for test_id in range(1):
             # Update the scenario
             if STATIONARY:
                 current_scenario = tasks[test_id]
@@ -124,17 +126,17 @@ def simul(tasks, meta_algo):
                 # Get action from the policy and perform the simulation step
                 action, _ = policy.get_action(obs)
                 obs, reward, done, cost_dict = env.step(action)
-
+                actions.append(action)
                 total_cost -= reward  # Update total cost
 
             # Update the results based on cost_dict
             for key in cost_dict.keys():
-                test_result[key] += cost_dict[key] / 20  # Averaging the cost
+                test_result[key] += cost_dict[key] / NUM_OF_TEST  # Averaging the cost
 
             mean_data.append(total_cost)
-            test_result["Mean"] += float(total_cost) / 20  # Averaging the total cost
+            test_result["Mean"] += float(total_cost) / NUM_OF_TEST  # Averaging the total cost
 
         # Calculate the variance from the mean data
-        test_result["Variance"] = statistics.stdev(mean_data)
+        #test_result["Variance"] = statistics.stdev(mean_data)
         sess.close()
-        return test_result
+        return test_result, actions

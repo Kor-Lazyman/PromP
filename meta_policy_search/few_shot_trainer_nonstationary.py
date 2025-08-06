@@ -72,13 +72,15 @@ class Trainer(object):
             if model_path != False:
                 # 3. 파라미터 복원
                 saver.restore(sess, model_path)  # 만들어진 graph에 parameter설정, (폴더명 입력)
-
             else:
                 pass
             # self.sampler.update_tasks()
             self.policy.switch_to_pre_update()  # Switch to pre-update policy
             self.sampler_for_learning.vec_env.set_tasks([self.env.tasks[0]]) # task setting
             self.sampler_for_test.vec_env.set_tasks([self.env.tasks[0]]) # task setting
+            paths = self.sampler_for_test.obtain_samples(log=False, log_prefix='Step_%d-' % 0)
+            before = paths[0][0]['actions']
+
             # Few-Shot-learning start
             for step in range(0, self.n_itr):
                 paths= self.sampler_for_learning.obtain_samples(log=False, log_prefix='Step_%d-' % step)
@@ -88,14 +90,16 @@ class Trainer(object):
                 
                 self.algo._adapt(samples_data)
 
-                paths= self.sampler_for_test.obtain_samples(log=False, log_prefix='Step_%d-' % step)
+                paths_2= self.sampler_for_test.obtain_samples(log=False, log_prefix='Step_%d-' % step)
                 
-                reward, _, self.data = self.env.log_diagnostics(sum(list(paths.values()), []), 0, self.n_itr)
+                reward, _, self.data = self.env.log_diagnostics(sum(list(paths_2.values()), []), 0, self.n_itr)
                 self.reward += reward
                 # Append shot_result
                 self.reward_by_shot.append(self.reward)
                 # reset
                 self.reward = 0
-
+        after = paths_2[0][0]['actions']
         self.sess.close()      
-        return self.reward_by_shot  
+        return self.reward_by_shot, before, after  
+
+

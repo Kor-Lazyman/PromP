@@ -32,12 +32,12 @@ if "MainProcess" == current_process().name:
     if RL_EXPERIMENT:
         TENSORFLOW_LOGS = DEFINE_FOLDER(PAR_FOLDER)
         # Saved Model
-        SAVED_MODEL_PATH = save_path(os.path.join(parent_dir, "Saved_Model"))
+        SAVED_MODEL_PATH = DEFINE_FOLDER(os.path.join(parent_dir, "Saved_Model"))
         SAVE_MODEL = True
-        HYPERPARAMETER_LOG = save_path(os.path.join(parent_dir, "Optuna_result"))
+        HYPERPARAMETER_LOG = DEFINE_FOLDER(os.path.join(parent_dir, "Optuna_result"))
     
-        CSV_LOG = save_path(os.path.join(
+        CSV_LOG = DEFINE_FOLDER(os.path.join(
                 parent_dir, "FEW_SHOT_RESULT"))
     else:
-        CSV_LOG = save_path(os.path.join(
+        CSV_LOG = DEFINE_FOLDER(os.path.join(
                 parent_dir, "SSPOLICY_RESULT"))
