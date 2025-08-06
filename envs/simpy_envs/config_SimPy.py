@@ -535,7 +535,7 @@ SIM_TIME = 200 # Default: 200 [days] per episode
 PRINT_SIM = False
 ASSEMBLY_PROCESS = "AP4"
 SSPOLICY = False
-STATIONARY = False
+STATIONARY = True
 NUM_OF_TEST = 1
 if ASSEMBLY_PROCESS == "AP1":
     MAT_COUNT = 1
