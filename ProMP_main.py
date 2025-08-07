@@ -82,7 +82,7 @@ if __name__=="__main__":
         'env': 'HalfCheetahRandDirecEnv', # Not using this parameter
 
         # sampler config
-        'rollouts_per_meta_task': 20, # number trajectorys for adapting inner loop
+        'rollouts_per_meta_task': 20, # number trajectories for adapting inner loop
         'max_path_length': SIM_TIME,
         'parallel': True, # Multi_processing
 

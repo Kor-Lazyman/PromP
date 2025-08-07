@@ -68,8 +68,9 @@ class MetaEnv(Env):
         Returns:
             tasks (list) : an (n_tasks) length list of tasks
         """
-        print("Check")
+        print("all tasks reset")
         tasks = random.sample(self.all_tasks, n_tasks)
+        self.all_tasks = create_scenarios()
         return tasks
 
     def set_task(self, task):
@@ -80,7 +81,7 @@ class MetaEnv(Env):
         Args:
             task: task of the meta-learning environment
         """
-        self.scenario = self.tasks[0]
+        
 
     def get_task(self):
         """

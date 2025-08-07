@@ -1,7 +1,6 @@
 from meta_policy_search.baselines.linear_baseline import LinearFeatureBaseline
-import envs.simpy_envs.promp_env as simpy_env
 from meta_policy_search.meta_algos.inner_test import VPGMAML
-from meta_policy_search.few_shot_trainer import Trainer
+from meta_policy_search.few_shot_trainer_nonstationary import Trainer
 from meta_policy_search.samplers.meta_sampler import MetaSampler
 from meta_policy_search.samplers.meta_sample_processor import MetaSampleProcessor
 from meta_policy_search.policies.meta_gaussian_mlp_policy import MetaGaussianMLPPolicy
@@ -9,15 +8,23 @@ from meta_policy_search.utils import logger
 from meta_policy_search.utils.utils import set_seed, ClassEncoder
 from envs.simpy_envs.config_SimPy import *
 from envs.simpy_envs.config_folders import *
+from envs.simpy_envs.scenarios import *
 import numpy as np
 import tensorflow as tf
 import os
 import time
 import pandas as pd
 import statistics
+import matplotlib.pyplot as plt
+import envs.simpy_envs.promp_env_nonstationary as simpy_env
 tf.compat.v1.disable_eager_execution()
 meta_policy_search_path = '/'.join(os.path.realpath(os.path.dirname(__file__)).split('/')[:-1])
-def reset_classes(config, env, model):
+
+def reset_classes(config, model, tasks):
+    if STATIONARY:
+        env = simpy_env.MetaEnv(tasks) # apply simpy_env wrapper to env
+    else:
+        env = simpy_env.MetaEnv(tasks) # apply simpy_env wrapper to env
     if model == "ProMP":
         name = "ppo_maml" # ProMP에 등록된 Node 이름
     elif model == "VPG_MAML":
@@ -82,54 +89,115 @@ def reset_classes(config, env, model):
     return trainer
 def main(config):
     start = time.time()
-    num_tasks = 1
-    env = simpy_env.MetaEnv() # apply simpy_env wrapper to env
+    tasks = []
     # task sampling
-    tasks = env.sample_tasks(num_tasks)
+    if STATIONARY:
+        for x in range(NUM_OF_TEST):
+            sampled_scenario = random.sample(create_scenarios(), 1)[0]
+            tasks.append(sampled_scenario)
+    else:
+        for x in range(NUM_OF_TEST*3):
+            sampled_scenario = random.sample(create_scenarios(), 1)[0]
+            tasks.append(sampled_scenario)
+    
     # 각 task별 reward 수집
     rewards_by_task = {
         "VPG_MAML_Mean":[],
-        #"VPG_MAML_STD":[],
+        "VPG_MAML_STD":[],
         "ProMP_Mean":[],
+        "ProMP_STD": [],
+        "Random_Mean": [],
+        "Random_STD": []
+    }
+    ''' # umap 준비
+    actions_by_shots_before = {
+        "VPG_MAML":{},
+        #"VPG_MAML_STD":[],
+        "ProMP":{},
         #"ProMP_STD": [],
-        "Random_Mean": []
+        "Random": {}
         #"Random_STD": []
     }
+    actions_by_shots_after = {
+        "VPG_MAML":{},
+        #"VPG_MAML_STD":[],
+        "ProMP":{},
+        #"ProMP_STD": [],
+        "Random":{}
+        #"Random_STD": []
+    }
+    '''
     # model들 지정
-    model_type = ["VPG_MAML", "ProMP", "Random"]
+    model_type = ["ProMP", "VPG_MAML", "Random"]
     # model path 기본값 설정
     model_path = False
     for model in model_type:
         reward_by_shots= []
         # load 모델 위치 설정
         if model == "VPG_MAML":
-            model_path = os.path.join(f"envs/Saved_Model_maml", "model")
+            model_path = os.path.join(f"envs/Saved_Model/MAML", "model")
         elif model == "ProMP":
-            model_path = os.path.join(f"envs/Saved_Model_promp", "model")
+            model_path = os.path.join(f"envs/Saved_Model/ProMP", "model")
         else:
             # random 파라미터는 위치가 없기 때문에 false로
             model_path = False
-        task_num = 0
+        '''
+        for action in range(MAT_COUNT):
+            actions_by_shots_before[model][action] = []
+            actions_by_shots_after[model][action] = []
+        '''
+        #tasks[0]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 12, "max": 18}
+        #tasks[1]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 8, "max": 11}
+        #tasks[2]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 16, "max": 18}
         # 학습 진행
-        for task in tasks:
-            print("="*10,f"Task {task_num+1}/10 Started","="*10)
+        for scenario_id in range(NUM_OF_TEST):
+            print("="*10,f"Task {scenario_id+1}/10 Started","="*10)
             # 클래스 초기화
-            trainer = reset_classes(config, env, model)
-            reward_by_shots.append(trainer.train([task], model_path))
+            if STATIONARY:
+                trainer = reset_classes(config, model, [tasks[scenario_id]])
+            else:
+                trainer = reset_classes(config, model, tasks[3*scenario_id: 3*scenario_id+3])
+            
+            # 학습 후 데이터 추출
+            reward_lst, before, after = trainer.train(model_path)
+        #    print(after)
+            ''' # Umap 준비
+            for action in before:
+                for i in range(len(action)):
+                    action[i] = min(max(np.round(action[i]),0),10)
+                    actions_by_shots_before[model][i].append(action[i])
+
+            for action in after:
+                for i in range(len(action)):
+                    action[i] = min(max(np.round(action[i]),0),10)
+                    actions_by_shots_after[model][i].append(action[i])
+            '''
+            # 리워드(10개의 shot에 대한 데이터)
+            reward_by_shots.append(reward_lst)
+
+            trainer.env.reset()
+                   
             # tf의 graph 제거(network 초기화)
             tf.compat.v1.reset_default_graph()
-            task_num += 1
         # 평균, 표준편차 계산
-        for i in range(len(reward_by_shots[0])):
+        for i in range(len(reward_by_shots[0])): # shot 수만큼
             temp_mean = []
             for j in range(len(reward_by_shots)):
-                temp_mean.append(reward_by_shots[j][i])
-            rewards_by_task[f"{model}_Mean"].append(sum(temp_mean)/num_tasks)
-            #rewards_by_task[f"{model}_STD"].append(statistics.stdev(temp_mean))
+                temp_mean.append(reward_by_shots[j][i])#i번 shot에 대한 리스트
+            rewards_by_task[f"{model}_Mean"].append(sum(temp_mean)/NUM_OF_TEST) #i번 shot에 대한 평균
+            
+            rewards_by_task[f"{model}_STD"].append(statistics.stdev(temp_mean))
     # 데이터 export
     df = pd.DataFrame(rewards_by_task)
     df = df.T
-    df.to_csv(f"{CSV_LOG}.csv")
+    df.to_csv(os.path.join(CSV_LOG,"Result.csv"))
+    '''
+    for model in model_type:
+        temp_df = pd.DataFrame(actions_by_shots_after[model])
+        temp_df.to_csv(os.path.join(CSV_LOG,f"{model}_after.csv"))
+        temp_df = pd.DataFrame(actions_by_shots_before[model])
+        temp_df.to_csv(os.path.join(CSV_LOG,f"{model}_before.csv"))
+    '''
     print("LR-Time:", time.time()-start)
 if __name__=="__main__":
     idx = int(time.time())
@@ -158,7 +226,7 @@ if __name__=="__main__":
 
         # ProMP config
         'inner_lr': 0.1, # adaptation step size
-        'n_itr': 100, # number of overall training iterations
+        'n_itr': 11, # number of overall training iterations
         'meta_batch_size': 1, # number of sampled meta-tasks per iterations
         'num_inner_grad_steps': 1, # number of inner / adaptation gradient steps
         'inner_type' : 'log_likelihood', # type of inner loss function used

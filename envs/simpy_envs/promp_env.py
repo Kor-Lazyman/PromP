@@ -21,7 +21,8 @@ class MetaEnv(Env):
     """
     Wrapper around OpenAI gym environments, interface for meta learning
     """
-    def __init__(self):
+    def __init__(self, tasks):
+        self.tasks = None
         self.all_tasks = create_scenarios()
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
         super(MetaEnv, self).__init__()
@@ -82,7 +83,7 @@ class MetaEnv(Env):
         Args:
             task: task of the meta-learning environment
         """
-        self.scenario = task
+        self.scenario = self.tasks[0]
 
     def get_task(self):
         """

@@ -30,8 +30,7 @@ if "MainProcess" == current_process().name:
             parent_dir, "Tensorboard_logs_Experiment_ProMP")
     # Define dir's path
     if RL_EXPERIMENT:
-        HYPERPARAMETER_LOG = DEFINE_FOLDER(os.path.join(parent_dir, "Optuna_result"))
-        
+       # HYPERPARAMETER_LOG = DEFINE_FOLDER(os.path.join(parent_dir, "Optuna_result"))
         if FEWSHOT:
             CSV_LOG = DEFINE_FOLDER(os.path.join(
                     parent_dir, "FEW_SHOT_RESULT"))

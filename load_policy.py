@@ -1,5 +1,5 @@
 from meta_policy_search.baselines.linear_baseline import LinearFeatureBaseline
-import envs.simpy_envs.promp_env as simpy_env
+import envs.simpy_envs.promp_env_nonstationary as simpy_env
 from meta_policy_search.meta_algos.pro_mp import ProMP
 from meta_policy_search.meta_trainer import Trainer
 from meta_policy_search.samplers.meta_sampler import MetaSampler
@@ -24,10 +24,9 @@ def setting_scenario(procurementList, customer, tasks):
 
 def run_simpy(tasks):
     meta_results = []
-    #for meta_algo in ["promp"]:
-    test_result, actions = simul(tasks, "promp")
-    meta_results.append(test_result)
-        #tf.compat.v1.reset_default_graph()  # 그래프 리셋
+    for meta_algo in ["ProMP", "MAML"]:
+        test_result, actions = simul(tasks, meta_algo)
+        meta_results.append(test_result)
     return meta_results, actions
 
 def simul(tasks, meta_algo):
@@ -62,7 +61,7 @@ def simul(tasks, meta_algo):
     new_graph = tf.Graph()
     with new_graph.as_default():
         # Apply the MetaEnv environment to the graph
-        env = simpy_env.MetaEnv() # apply simpy_env wrapper to env
+        env = simpy_env.MetaEnv(tasks) # apply simpy_env wrapper to env
         sess = tf.compat.v1.Session(graph=new_graph)  # Start a new session with the new graph
         sess.__enter__()
 
@@ -77,7 +76,7 @@ def simul(tasks, meta_algo):
 
         # Restore model parameters from the saved model
         saver = tf.compat.v1.train.Saver()
-        saver.restore(sess, os.path.join(f"envs/Saved_Model_{meta_algo}", "model"))  # Restore the model from a checkpoint
+        saver.restore(sess, os.path.join(f"envs/Saved_Model/{meta_algo}", "model"))  # Restore the model from a checkpoint
         policy.switch_to_pre_update()  # Switch the policy to pre-update mode
 
         # Initialize result variables
@@ -94,7 +93,7 @@ def simul(tasks, meta_algo):
         # Store results for calculating mean and variance later
         mean_data = []
         actions = []
-        for test_id in range(1):
+        for test_id in range(NUM_OF_TEST):
             # Update the scenario
             if STATIONARY:
                 current_scenario = tasks[test_id]
@@ -102,7 +101,6 @@ def simul(tasks, meta_algo):
                 current_scenario = tasks[test_id * 3]
 
             print(f"Testing with scenario: {current_scenario}")
-            env.set_task(current_scenario)  # Set the current task scenario
             obs = env.reset()  # Reset the environment
 
             total_cost = 0  # Initialize total cost for this test
@@ -137,6 +135,6 @@ def simul(tasks, meta_algo):
             test_result["Mean"] += float(total_cost) / NUM_OF_TEST  # Averaging the total cost
 
         # Calculate the variance from the mean data
-        #test_result["Variance"] = statistics.stdev(mean_data)
+        test_result["Variance"] = statistics.stdev(mean_data)
         sess.close()
         return test_result, actions
