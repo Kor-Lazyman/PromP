@@ -534,8 +534,8 @@ SIM_TIME = 200 # Default: 200 [days] per episode
 # Print logs
 PRINT_SIM = False
 ASSEMBLY_PROCESS = "AP4" # AP1, AP2, AP3, AP4
-SSPOLICY = True # Default False (True/False), Using True when experiment_baseline
-STATIONARY = False # Default True (True/False)
+SSPOLICY = False # Default False (True/False), Using True when experiment_baseline
+STATIONARY = True # Default True (True/False)
 NUM_OF_TEST = 10 # for baseline & FEW_SHOT, NUM_OF_TEST>1
 
 if ASSEMBLY_PROCESS == "AP1":

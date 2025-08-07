@@ -98,12 +98,12 @@ if __name__=="__main__":
         # ProMP config
         'inner_lr': 0.002, # adaptation step size
         'learning_rate': 0.0005, # meta-policy gradient step size
-        'num_promp_steps': 5, # number of ProMp steps without re-sampling
+        'num_promp_steps': 5, # number of ProMP steps without re-sampling
         'clip_eps': 0.3, # clipping range
         'target_inner_step': 0.01,
         'init_inner_kl_penalty': 5e-4,
         'adaptive_inner_kl_penalty': False, # whether to use an adaptive or fixed KL-penalty coefficient
-        'n_itr': 501, # number of overall training iterations
+        'n_itr': 1, # number of overall training iterations
         'meta_batch_size': 5, # number of sampled meta-tasks per iterations
         'num_inner_grad_steps': 1, # number of inner / adaptation gradient steps
 
