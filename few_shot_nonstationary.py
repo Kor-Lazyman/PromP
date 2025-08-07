@@ -1,5 +1,4 @@
 from meta_policy_search.baselines.linear_baseline import LinearFeatureBaseline
-import envs.simpy_envs.promp_env_nonstationary as simpy_env
 from meta_policy_search.meta_algos.inner_test import VPGMAML
 from meta_policy_search.few_shot_trainer_nonstationary import Trainer
 from meta_policy_search.samplers.meta_sampler import MetaSampler
@@ -17,7 +16,10 @@ import time
 import pandas as pd
 import statistics
 import matplotlib.pyplot as plt
-import csv
+if STATIONARY:
+    import envs.simpy_envs.promp_env as simpy_env
+else:
+    import envs.simpy_envs.promp_env_nonstationary as simpy_env
 tf.compat.v1.disable_eager_execution()
 meta_policy_search_path = '/'.join(os.path.realpath(os.path.dirname(__file__)).split('/')[:-1])
 
@@ -108,6 +110,7 @@ def main(config):
         "Random_Mean": [],
         "Random_STD": []
     }
+    ''' # umap 준비
     actions_by_shots_before = {
         "VPG_MAML":{},
         #"VPG_MAML_STD":[],
@@ -124,6 +127,7 @@ def main(config):
         "Random":{}
         #"Random_STD": []
     }
+    '''
     # model들 지정
     model_type = ["ProMP", "VPG_MAML", "Random"]
     # model path 기본값 설정
@@ -132,22 +136,23 @@ def main(config):
         reward_by_shots= []
         # load 모델 위치 설정
         if model == "VPG_MAML":
-            model_path = os.path.join(f"envs/Saved_Model/Train_45_maml_shortage_200", "model")
+            model_path = os.path.join(f"envs/Saved_Model/MAML", "model")
         elif model == "ProMP":
-            model_path = os.path.join(f"envs/Saved_Model/Train_45_promp_shortage_200", "model")
+            model_path = os.path.join(f"envs/Saved_Model/ProMP", "model")
         else:
             # random 파라미터는 위치가 없기 때문에 false로
             model_path = False
-        task_num = 0
+        '''
         for action in range(MAT_COUNT):
             actions_by_shots_before[model][action] = []
             actions_by_shots_after[model][action] = []
+        '''
         #tasks[0]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 12, "max": 18}
         #tasks[1]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 8, "max": 11}
         #tasks[2]["DEMAND"] = {"Dist_Type": "UNIFORM", "min": 16, "max": 18}
         # 학습 진행
         for scenario_id in range(num_scenarios):
-            print("="*10,f"Task {task_num+1}/10 Started","="*10)
+            print("="*10,f"Task {scenario_id+1}/10 Started","="*10)
             # 클래스 초기화
             if STATIONARY:
                 trainer = reset_classes(config, model, [tasks[scenario_id]])
@@ -157,6 +162,7 @@ def main(config):
             # 학습 후 데이터 추출
             reward_lst, before, after = trainer.train(model_path)
         #    print(after)
+            ''' # Umap 준비
             for action in before:
                 for i in range(len(action)):
                     action[i] = min(max(np.round(action[i]),0),10)
@@ -166,6 +172,7 @@ def main(config):
                 for i in range(len(action)):
                     action[i] = min(max(np.round(action[i]),0),10)
                     actions_by_shots_after[model][i].append(action[i])
+            '''
             # 리워드(10개의 shot에 대한 데이터)
             reward_by_shots.append(reward_lst)
 
@@ -173,7 +180,6 @@ def main(config):
                    
             # tf의 graph 제거(network 초기화)
             tf.compat.v1.reset_default_graph()
-            task_num += 1
         # 평균, 표준편차 계산
         for i in range(len(reward_by_shots[0])): # shot 수만큼
             temp_mean = []
@@ -181,18 +187,18 @@ def main(config):
                 temp_mean.append(reward_by_shots[j][i])#i번 shot에 대한 리스트
             rewards_by_task[f"{model}_Mean"].append(sum(temp_mean)/num_scenarios) #i번 shot에 대한 평균
             
-            #rewards_by_task[f"{model}_STD"].append(statistics.stdev(temp_mean))
+            rewards_by_task[f"{model}_STD"].append(statistics.stdev(temp_mean))
     # 데이터 export
     df = pd.DataFrame(rewards_by_task)
     df = df.T
     df.to_csv(os.path.join(CSV_LOG,"Result.csv"))
-    
+    '''
     for model in model_type:
         temp_df = pd.DataFrame(actions_by_shots_after[model])
         temp_df.to_csv(os.path.join(CSV_LOG,f"{model}_after.csv"))
         temp_df = pd.DataFrame(actions_by_shots_before[model])
         temp_df.to_csv(os.path.join(CSV_LOG,f"{model}_before.csv"))
-
+    '''
     print("LR-Time:", time.time()-start)
 if __name__=="__main__":
     idx = int(time.time())

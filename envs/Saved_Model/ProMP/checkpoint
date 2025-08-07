@@ -1,0 +1,2 @@
+model_checkpoint_path: "c:\\Github\\promp_final\\envs\\Saved_Model\\Train_1/model"
+all_model_checkpoint_paths: "c:\\Github\\promp_final\\envs\\Saved_Model\\Train_1/model"

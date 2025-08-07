@@ -22,9 +22,6 @@ class MetaEnv(Env):
     Wrapper around OpenAI gym environments, interface for meta learning
     """
     def __init__(self):
-        self.actions = []
-
-        
         self.all_tasks = create_scenarios()
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
         super(MetaEnv, self).__init__()
@@ -115,13 +112,10 @@ class MetaEnv(Env):
         state_real = self.get_current_state()
         STATE_DICT.clear()
         DAILY_REPORTS.clear()
-        self.actions = []
         return state_real
 
     def step(self, action):
-        self.actions.append(action)
         # Update the action of the agent
-        test_actions = []
         # Update the action of the agent
         if RL_ALGORITHM == "PPO":
             i = 0
@@ -130,7 +124,6 @@ class MetaEnv(Env):
                     # Set action as predicted value
                     I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0),10) # 양수 상한
                     i += 1
-                    test_actions.append(I[ASSEMBLY_PROCESS][_]['LOT_SIZE_ORDER'])
         
         elif RL_ALGORITHM == "DQN":
             pass

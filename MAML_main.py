@@ -115,7 +115,7 @@ if __name__=="__main__":
         'inner_lr': 0.002, # adaptation step size
         'learning_rate': 0.0005, # meta-policy gradient step size
         'step_size': 0.01, # size of the TRPO trust-region
-        'n_itr': 1001, # number of overall training iterations
+        'n_itr': 501, # number of overall training iterations
         'meta_batch_size': 5, # number of sampled meta-tasks per iterations
         'num_inner_grad_steps': 1, # number of inner / adaptation gradient steps
         'inner_type' : 'log_likelihood', # type of inner loss function used

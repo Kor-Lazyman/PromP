@@ -20,7 +20,6 @@ class MetaEnv(Env):
     """
     def __init__(self, tasks):
         self.tasks = tasks
-        self.actions = []
         self.all_tasks = create_scenarios()
        
         #print("Tensorboard Directory: :", TENSORFLOW_LOGS)
@@ -115,7 +114,6 @@ class MetaEnv(Env):
         state_real = self.get_current_state()
         STATE_DICT.clear()
         DAILY_REPORTS.clear()
-        self.actions = []
         
         return state_real
 
@@ -133,8 +131,6 @@ class MetaEnv(Env):
                 self.setting_scenario()
                 #print("After_Scenario:", self.scenario)
 
-        self.actions.append(action)
-        test_actions = []
         # Update the action of the agent
         if RL_ALGORITHM == "PPO":
             i = 0
@@ -143,7 +139,6 @@ class MetaEnv(Env):
                     # Set action as predicted value
                     I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"] = min(max(np.round(action[i]),0),10) # 양수 상한
                     i += 1
-                    test_actions.append(I[ASSEMBLY_PROCESS][_]["LOT_SIZE_ORDER"])
     
         # Capture the current state of the environment
         # current_state = env.cap_current_state(self.inventoryList)

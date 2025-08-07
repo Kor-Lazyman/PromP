@@ -30,14 +30,15 @@ if "MainProcess" == current_process().name:
             parent_dir, "Tensorboard_logs_Experiment_ProMP")
     # Define dir's path
     if RL_EXPERIMENT:
-        TENSORFLOW_LOGS = DEFINE_FOLDER(PAR_FOLDER)
-        # Saved Model
-        SAVED_MODEL_PATH = DEFINE_FOLDER(os.path.join(parent_dir, "Saved_Model"))
-        SAVE_MODEL = True
         HYPERPARAMETER_LOG = DEFINE_FOLDER(os.path.join(parent_dir, "Optuna_result"))
+        
         if FEWSHOT:
             CSV_LOG = DEFINE_FOLDER(os.path.join(
                     parent_dir, "FEW_SHOT_RESULT"))
+        else:
+            TENSORFLOW_LOGS = DEFINE_FOLDER(PAR_FOLDER)
+            # Saved Model
+            SAVED_MODEL_PATH = DEFINE_FOLDER(os.path.join(parent_dir, "Saved_Model"))
     else:
         CSV_LOG = DEFINE_FOLDER(os.path.join(
                 parent_dir, "SSPOLICY_RESULT"))

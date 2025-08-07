@@ -443,7 +443,7 @@ P = {
             "QNTY_FOR_INPUT_ITEM": [1, 1],
             "OUTPUT": I["AP4"][11],
             "PROCESS_COST": 1,
-            "PROCESS_STOP_COST": 2
+            "PROCESS_STOP_COST": 2 # 사용 되지 않는 값
         },
         1: {
             "ID": 1,
@@ -452,7 +452,7 @@ P = {
             "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
             "OUTPUT": I["AP4"][12],
             "PROCESS_COST": 1,
-            "PROCESS_STOP_COST": 2
+            "PROCESS_STOP_COST": 2 # 사용 되지 않는 값
         },
         2: {
             "ID": 2,
@@ -461,7 +461,7 @@ P = {
             "QNTY_FOR_INPUT_ITEM": [1, 1, 1],
             "OUTPUT": I["AP4"][13],
             "PROCESS_COST": 1,
-            "PROCESS_STOP_COST": 2
+            "PROCESS_STOP_COST": 2 # 사용 되지 않는 값
         },
         3: {
             "ID": 3,
@@ -470,7 +470,7 @@ P = {
             "QNTY_FOR_INPUT_ITEM": [1, 1, 1, 1],
             "OUTPUT": I["AP4"][14],
             "PROCESS_COST": 1,
-            "PROCESS_STOP_COST": 2
+            "PROCESS_STOP_COST": 2 # 사용 되지 않는 값
         },
         4: {
             "ID": 4,
@@ -479,7 +479,7 @@ P = {
             "QNTY_FOR_INPUT_ITEM": [1, 1, 1, 1],
             "OUTPUT": I["AP4"][0],
             "PROCESS_COST": 1,
-            "PROCESS_STOP_COST": 2
+            "PROCESS_STOP_COST": 2 # 사용 되지 않는 값
         }
     }
 }
@@ -535,7 +535,7 @@ SIM_TIME = 200 # Default: 200 [days] per episode
 PRINT_SIM = False
 ASSEMBLY_PROCESS = "AP4"
 SSPOLICY = False
-STATIONARY = True
+STATIONARY = False
 NUM_OF_TEST = 1
 if ASSEMBLY_PROCESS == "AP1":
     MAT_COUNT = 1
