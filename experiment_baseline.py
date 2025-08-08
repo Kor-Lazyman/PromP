@@ -192,9 +192,8 @@ def main():
         for policy_id in range(len(sS_policies)):
            #test_baseline(test_id, policy)
            test_baseline_origin(test_id, sS_policies[policy_id], policy_id)
-
-    for test_id in range(NUM_OF_TEST):
-            test_result["Variance"][policy_id] = statistics.stdev(mean_data[policy_id])
+    for policy_id in range(len(sS_policies)):
+        test_result["Variance"][policy_id] = statistics.stdev(mean_data[policy_id])
     
     #시나리오 변경에 따른 테스트 변경 필요(nonstationary에선 s1,s2,s3합하셈)
     meta_results, actions_model = model.run_simpy(scenarios)
